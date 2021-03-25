@@ -1,1 +1,1 @@
-
+from .Pix2PixHDModel_Mapping import Pix2PixHDModel_Mapping
