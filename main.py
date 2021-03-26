@@ -4,6 +4,7 @@ import tensorflow as tf
 import tensorboard as tb
 import numpy as np
 
+from models import Pix2PixHDModel_Mapping
 import settings
 from utils import *
 
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     try:
         parser = argparse.ArgumentParser(description=settings.PROJECT_DESCRIPTION)
         parser.add_argument('--input_folder', required=True, type=str, help="Folder with image files to process")
-        parser.add_argument('--output_folder', type=str, default=setting.DEFAULT_OUTPUT_FOLDER, help="Folder where to output processed images")
+        parser.add_argument('--output_folder', type=str, default=settings.DEFAULT_OUTPUT_FOLDER, help="Folder where to output processed images")
         parser.add_argument('--gpu_ids', type=lambda ids_str: [int(x) for x in ids_str.split(',')], default='0', help="Comma separated GPU device ids")
         parser.add_argument('--checkpoint', type=str, default='Setting_9_epoch_100', help="Checkpoint weights to use")
         parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")

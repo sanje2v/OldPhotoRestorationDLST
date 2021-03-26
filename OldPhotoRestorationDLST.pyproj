@@ -29,6 +29,24 @@
     <Compile Include="models\GlobalGenerator_DCDCv2.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="models\layers\ReflectionPadding2D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\ResnetBlock.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\modules\MappingModule.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\modules\MappingModuleWithMask.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\modules\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\Pix2PixHDModel_Mapping.py">
       <SubType>Code</SubType>
     </Compile>
@@ -55,6 +73,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="models\" />
+    <Folder Include="models\layers\" />
+    <Folder Include="models\modules\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />

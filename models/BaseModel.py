@@ -2,4 +2,5 @@ import tensorflow as tf
 
 
 class BaseModel(tf.keras.Model):
-    pass
+    def __init__(self, opts):
+        pass
