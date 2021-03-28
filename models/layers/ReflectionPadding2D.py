@@ -7,7 +7,7 @@ class ReflectionPadding2D(tf.keras.layers.Layer):
         if isinstance(padding, int):
             padding = (padding, padding)
         self.padding = tuple(padding)
-        self.input_spec = [InputSpec(ndim=4)]
+        self.input_spec = [tf.keras.layers.InputSpec(ndim=4)]
         super(ReflectionPadding2D, self).__init__(**kwargs)
 
     def compute_output_shape(self, s):

@@ -5,8 +5,8 @@ from .modules import *
 
 
 class Pix2PixHDModel_Mapping(BaseModel):
-    def __init__(self, opts):
-        super().__init__(opts)
+    def __init__(self, opts, *args, **kwargs):
+        super().__init__(opts, *args, **kwargs)
 
         netG_input_nc = opts.label_nc if opts.label_nc != 0 else opts.input_nc
 
@@ -32,7 +32,10 @@ class Pix2PixHDModel_Mapping(BaseModel):
         if training:
             raise NotImplementedError("Training 'Pix2PixHDModel_Mapping' instance is NOT supported yet.")
 
-        label, instance = inputs
+        input_concat, _ = inputs
+        input_concat = tf.expand_dims(input_concat, axis=0)
 
-        label_feature = self.netG_A.predict({'input': label, 'flow': 'enc'})
+        label_feature = self.netG_A([input_concat, 'enc'])
+        label_feature_map = self.mapping_net(label_feature)
 
+        return self.netG_B([label_feature_map, 'dec'])

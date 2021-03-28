@@ -12,6 +12,9 @@
     <Name>OldPhotoRestorationDLST</Name>
     <RootNamespace>OldPhotoRestorationDLST</RootNamespace>
     <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>--input_folder C:\Users\Sanjeev\Desktop\Bringing-Old-Photos-Back-to-Life\imgs\totest</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,11 +25,14 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="consts.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.py" />
     <Compile Include="models\BaseModel.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="models\GlobalGenerator_DCDCv2.py">
+    <Compile Include="models\modules\GlobalGenerator_DCDCv2.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\layers\ReflectionPadding2D.py">
@@ -56,6 +62,9 @@
     <Compile Include="settings.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="test_options.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="utils.py">
       <SubType>Code</SubType>
     </Compile>
@@ -75,6 +84,7 @@
     <Folder Include="models\" />
     <Folder Include="models\layers\" />
     <Folder Include="models\modules\" />
+    <Folder Include="outputs\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />

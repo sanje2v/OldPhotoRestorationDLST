@@ -25,8 +25,8 @@ class ResnetBlock(tf.keras.layers.Layer):
             padding = (self.dilation, self.dilation)
 
         self.conv_block.add(Conv2D(self.dim, kernel_size=3, padding=padding, dilation=self.dilation))
-        self.conv_block.add(norm_layer(self.dim))
-        self.conv_block.add(activation_layer())
+        self.conv_block.add(self.norm_layer())
+        self.conv_block.add(self.activation_layer())
 
         if self.use_dropout:
             self.conv_block.add(Dropout(rate=0.5))
@@ -38,7 +38,7 @@ class ResnetBlock(tf.keras.layers.Layer):
             padding = 1
 
         self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding=padding))
-        self.conv_block.add(norm_layer(self.dim))
+        self.conv_block.add(self.norm_layer())
 
     def get_config(self):
         pass
