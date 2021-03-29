@@ -34,7 +34,7 @@ no_flip = True  # no flip
 label_nc = 0
 n_downsample_global = 3
 mc = 64
-k_size = 4
+k_size = 3
 start_r = 1
 mapping_n_block = 6
 map_mc = 512
@@ -49,6 +49,7 @@ non_local = ''
 spatio_size = 64
 feat_dim = -1
 use_segmentation_model = False
+mapping_net_dilation = 1
 
 if Quality_restore:
     name = 'mapping_quality'

@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from .BaseModel import BaseModel
 from .modules import *
+import consts
 
 
 class Pix2PixHDModel_Mapping(BaseModel):
@@ -10,6 +11,7 @@ class Pix2PixHDModel_Mapping(BaseModel):
 
         netG_input_nc = opts.label_nc if opts.label_nc != 0 else opts.input_nc
 
+        self.input_placeholder = tf.keras.Input(shape=(None, None, None, consts.NUM_RGB_CHANNELS))
         self.netG_A = GlobalGenerator_DCDCv2(opts,
                                              netG_input_nc,
                                              opts.output_nc,
@@ -33,8 +35,11 @@ class Pix2PixHDModel_Mapping(BaseModel):
             raise NotImplementedError("Training 'Pix2PixHDModel_Mapping' instance is NOT supported yet.")
 
         input_concat, _ = inputs
-        input_concat = tf.expand_dims(input_concat, axis=0)
 
+        if len(input_concat.shape) != 4:
+            input_concat = tf.expand_dims(input_concat, axis=0)
+
+        #input_concat = input_placeholder()
         label_feature = self.netG_A([input_concat, 'enc'])
         label_feature_map = self.mapping_net(label_feature)
 

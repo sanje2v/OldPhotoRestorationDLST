@@ -32,6 +32,7 @@
     <Compile Include="models\BaseModel.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="models\layers\ReplicationPadding2D.py" />
     <Compile Include="models\modules\GlobalGenerator_DCDCv2.py">
       <SubType>Code</SubType>
     </Compile>

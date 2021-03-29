@@ -17,6 +17,12 @@ def main(args):
     for opt in [x for x in dir(test_options) if not x.startswith('__')]:
         setattr(opts, opt, getattr(test_options, opt))
 
+    # Set GPU memory usage growth policy to prevent CUBLAS error
+    try:
+        tf.config.experimental.set_memory_growth(tf.config.experimental.list_physical_devices('GPU')[opts.gpu_id], True)
+    except RuntimeError as e:
+        pass
+
     with tf.device("/device:GPU:{:d}".format(opts.gpu_id)):
         # Get all image files in 'args.input_folder'
         input_image_filenames = getFilesWithExtension(args.input_folder, consts.IMAGE_FILE_EXTENSIONS, with_path=True)
@@ -29,13 +35,13 @@ def main(args):
                                                       dtype=tf.dtypes.float32,
                                                       expand_animations=False))  # NOTE: Image tensor range is 0.0-1.0
 
-        #input_shapes = [tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS)), tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS))]
-        #output_shapes = tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS))
-        model = Pix2PixHDModel_Mapping(opts)#, inputs=input_shapes)
+        input_shapes = [tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32),
+                        tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32)]
+        output_shapes = tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32)
+        model = Pix2PixHDModel_Mapping(opts, inputs=input_shapes, outputs=output_shapes)
         model.compile()
 
         # Preprocess and then batch predict
-        output_images = []
         for i in range(len(input_images)):
             if opts.NL_use_mask:
                 pass
@@ -44,12 +50,11 @@ def main(args):
                 mask = tf.zeros_like(input_image)
 
             input_image = input_normalize_transform(input_image)
-            output_images.append(model([input_image, mask]))
+            output_image = model([input_image, mask])
 
-        # Output images files
-        for i in range(len(output_images)):
-            output_image_filename = os.path.join(opts.input_folder, os.path.basename(input_images[i]))
-            tf.keras.preprocessing.image.save_img(output_image_filename, tf.make_ndarray(output_image[i]), scale=True)
+            # Output images file
+            output_image_filename = os.path.join(opts.output_folder, os.path.basename(input_image_filenames[i]))
+            tf.keras.preprocessing.image.save_img(output_image_filename, np.squeeze(output_image.numpy(), axis=0), scale=True)
 
 
 if __name__ == '__main__':

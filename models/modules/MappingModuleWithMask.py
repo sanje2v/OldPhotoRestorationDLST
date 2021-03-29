@@ -17,16 +17,18 @@ class MappingModuleWithMask(tf.keras.layers.Layer):
         self.activation_layer = activation_layer
 
     def build(self, input_shape):
-        self.model = tf.keras.Sequential()
+        model = tf.keras.Sequential()
         tmp_nc = 64
         n_up = 4
 
         for i in range(n_up):
             ic = min(tmp_nc * 2**i, self.mc)
             oc = min(tmp_nc * 2**(i + 1), self.mc)
-            self.model.add(Conv2D(flters=oc, kernel_size=3, padding=(1, 1)))
-            self.model.add(self.norm_layer(oc))
-            self.model.add(self.activation_layer())
+            model.add(Conv2D(filters=oc, kernel_size=3, padding='same'))
+            model.add(self.norm_layer())
+            model.add(self.activation_layer())
+
+        self.before_NL = model
 
         for i in range(self.n_blocks):
             self.model.add(ResnetBlock(self.mc,
@@ -38,13 +40,13 @@ class MappingModuleWithMask(tf.keras.layers.Layer):
         for i in range(n_up - 1):
             ic = min(64 * 2**(4 - i), self.mc)
             oc = min(64 * 2**(3 - i), self.mc)
-            self.model.add(Conv2D(filters=oc, kernel_size=3, padding=(1, 1)))
-            self.model.add(self.norm_layer(oc))
+            self.model.add(Conv2D(filters=oc, kernel_size=3, padding='same'))
+            self.model.add(self.norm_layer())
             self.model.add(self.activation_layer())
-        self.model.add(Conv2D(filters=(tmp_nc * 2), kernel_size=3, padding=(1, 1)))
+        self.model.add(Conv2D(filters=(tmp_nc * 2), kernel_size=3, padding='same'))
 
         if self.opts.feat_dim > 0 and opt.feat_dim < 64:
-            self.model.add(self.norm_layer(tmp_nc))
+            self.model.add(self.norm_layer())
             self.model.add(self.activation_layer())
             self.model.add(Conv2D(filters=opts.feat_dim, kernel_size=1))
 
