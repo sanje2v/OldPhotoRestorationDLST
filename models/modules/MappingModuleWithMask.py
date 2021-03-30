@@ -5,8 +5,8 @@ from ..layers import ResnetBlock
 
 
 class MappingModuleWithMask(tf.keras.layers.Layer):
-    def __init__(self, opts, nc, mc=64, n_blocks=3, padding_type='reflect', norm_layer=BatchNormalization, activation_layer=ReLU):
-        super().__init__()
+    def __init__(self, opts, nc, mc=64, n_blocks=3, padding_type='reflect', norm_layer=BatchNormalization, activation_layer=ReLU, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.opts = opts
         self.nc = nc
@@ -17,7 +17,7 @@ class MappingModuleWithMask(tf.keras.layers.Layer):
         self.activation_layer = activation_layer
 
     def build(self, input_shape):
-        model = tf.keras.Sequential()
+        model = tf.keras.Sequential(name='model')
         tmp_nc = 64
         n_up = 4
 
@@ -49,9 +49,6 @@ class MappingModuleWithMask(tf.keras.layers.Layer):
             self.model.add(self.norm_layer())
             self.model.add(self.activation_layer())
             self.model.add(Conv2D(filters=opts.feat_dim, kernel_size=1))
-
-    def get_config(self):
-        pass
 
     def call(self, inputs):
         return self.model(inputs)

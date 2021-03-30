@@ -5,8 +5,8 @@ from . import ReflectionPadding2D
 
 
 class ResnetBlock(tf.keras.layers.Layer):
-    def __init__(self, dim, padding_type, norm_layer, activation_layer, use_dropout=False, dilation=1):
-        super().__init__()
+    def __init__(self, dim, padding_type, norm_layer, activation_layer, use_dropout=False, dilation=1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.dim = dim
         self.padding_type = padding_type
@@ -16,7 +16,7 @@ class ResnetBlock(tf.keras.layers.Layer):
         self.dilation = dilation
 
     def build(self, input_shape):
-        self.conv_block = tf.keras.Sequential()
+        self.conv_block = tf.keras.Sequential(name='conv_block')
 
         if self.padding_type == 'reflect':
             self.conv_block.add(ReflectionPadding2D(self.dilation))
@@ -41,9 +41,6 @@ class ResnetBlock(tf.keras.layers.Layer):
 
         self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding='valid'))
         self.conv_block.add(self.norm_layer())
-
-    def get_config(self):
-        pass
 
     def call(self, inputs):
         return inputs + self.conv_block(inputs)

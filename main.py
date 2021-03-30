@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorboard as tb
 import numpy as np
 
-from models import Pix2PixHDModel_Mapping
+from models import Pix2PixHDModel_Mapping, FaceDetector
 import consts
 import settings
 import test_options
@@ -20,14 +20,14 @@ def main(args):
     # Set GPU memory usage growth policy to prevent CUBLAS error
     try:
         tf.config.experimental.set_memory_growth(tf.config.experimental.list_physical_devices('GPU')[opts.gpu_id], True)
-    except RuntimeError as e:
+    except RuntimeError:
         pass
 
     with tf.device("/device:GPU:{:d}".format(opts.gpu_id)):
         # Get all image files in 'args.input_folder'
         input_image_filenames = getFilesWithExtension(args.input_folder, consts.IMAGE_FILE_EXTENSIONS, with_path=True)
 
-        # Load all images files
+        # Load all images files to tensor
         input_images = []
         for input_image_filename in input_image_filenames:
             input_images.append(tf.image.decode_image(tf.io.read_file(input_image_filename),
@@ -35,26 +35,43 @@ def main(args):
                                                       dtype=tf.dtypes.float32,
                                                       expand_animations=False))  # NOTE: Image tensor range is 0.0-1.0
 
-        input_shapes = [tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32),
-                        tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32)]
-        output_shapes = tf.keras.Input(shape=(None, None, consts.NUM_RGB_CHANNELS), dtype=tf.dtypes.float32)
-        model = Pix2PixHDModel_Mapping(opts, inputs=input_shapes, outputs=output_shapes)
-        model.compile()
+        # Create image enhancement model for stage 1
+        model = Pix2PixHDModel_Mapping(opts, name='model')
 
-        # Preprocess and then batch predict
+        # Preprocess and then run each stage
         for i in range(len(input_images)):
             if opts.NL_use_mask:
                 pass
             else:
-                input_image = input_scale_transform(input_images[i], opts.test_mode.lower())
+                input_image = input_scale_transform(input_images[i], opts.test_mode.lower(), settings.LOAD_SIZE)
                 mask = tf.zeros_like(input_image)
-
             input_image = input_normalize_transform(input_image)
-            output_image = model([input_image, mask])
 
-            # Output images file
-            output_image_filename = os.path.join(opts.output_folder, os.path.basename(input_image_filenames[i]))
-            tf.keras.preprocessing.image.save_img(output_image_filename, np.squeeze(output_image.numpy(), axis=0), scale=True)
+            ######### Step 1: Image enhancement
+            print(INFO("Running Image Enhancement stage..."))
+            output_image = model([input_image, mask])
+            output_image = np.squeeze(output_image.numpy(), axis=0)
+
+            # Save stage 2 output to file
+            output_image_filename = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR, os.path.basename(input_image_filenames[i]))
+            print(output_image.shape)
+            print(type(output_image))
+            tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=True)
+            print(INFO("Image Enchancement stage output saved to {:s}.".format(output_image_filename)))
+
+            ########## Step 2: Face detection
+            face_dectector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.DLIB_FACE_DETECTION_WEIGHTS))
+            face = face_detector()
+
+            if faces:
+                # Save stage 2 output to file
+                output_image_filename = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR, os.path.basename(input_image_filenames[i]))
+
+
+                ########## Step 3: Face enhancement
+                
+
+        print(model.summary())
 
 
 if __name__ == '__main__':
@@ -65,7 +82,7 @@ if __name__ == '__main__':
     assert check_version(np.__version__, *settings.MIN_NUMPY_VERSION), \
         FATAL("This program needs at least NumPy {0:d}.{1:d}.".format(*settings.MIN_NUMPY_VERSION))
 
-    assert tf.executing_eagerly(), "Eager execution needs to be enabled for Tensorflow. Expected to be enabled by default."
+    assert tf.executing_eagerly(), "Eager execution needs to be enabled for Tensorflow. Expected it to be enabled by default."
 
     try:
         parser = argparse.ArgumentParser(description=settings.PROJECT_DESCRIPTION)

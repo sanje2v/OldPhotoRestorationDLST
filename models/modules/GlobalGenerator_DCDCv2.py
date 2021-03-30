@@ -7,14 +7,14 @@ from ..layers import *
 
 class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
 
-    def _build_encoder(self):
+    def _build_encoder(self, name):
         encoder = tf.keras.Sequential(\
         [
             ReflectionPadding2D(padding=3),
             Conv2D(filters=min(self.ngf, self.opts.mc), kernel_size=7, padding='valid'),
             self.norm_layer(),
             self.activation_layer()
-        ])
+        ], name=name)
 
         for i in range(self.opts.start_r):
             mult = 2**i
@@ -70,8 +70,8 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
 
         return encoder
 
-    def _build_decoder(self):
-        decoder = tf.keras.Sequential()
+    def _build_decoder(self, name):
+        decoder = tf.keras.Sequential(name=name)
 
         mult = 2**(self.n_downsampling - 1)
 
@@ -141,8 +141,8 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
 
 
     def __init__(self, opts, input_nc, output_nc, ngf=64, k_size=3, n_downsampling=8, padding_type='reflect',
-                 norm_layer=BatchNormalization, activation_layer=ReLU):
-        super().__init__()
+                 norm_layer=BatchNormalization, activation_layer=ReLU, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.opts = opts
         self.input_nc = input_nc
@@ -155,11 +155,8 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         self.activation_layer = activation_layer
 
     def build(self, input_shape):
-        self.encoder = self._build_encoder()
-        self.decoder = self._build_decoder()
-
-    def get_config(self):
-        pass
+        self.encoder = self._build_encoder(name='encoder')
+        self.decoder = self._build_decoder(name='decoder')
 
     def call(self, inputs):
         x, flow = inputs
