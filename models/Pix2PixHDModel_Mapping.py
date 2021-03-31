@@ -11,6 +11,7 @@ class Pix2PixHDModel_Mapping(BaseModel):
 
         netG_input_nc = opts.label_nc if opts.label_nc != 0 else opts.input_nc
         self.netG_A = GlobalGenerator_DCDCv2(opts,
+                                             'enc',
                                              netG_input_nc,
                                              opts.output_nc,
                                              opts.ngf,
@@ -19,6 +20,7 @@ class Pix2PixHDModel_Mapping(BaseModel):
                                              norm_layer=opts.norm,
                                              name='netG_A')
         self.netG_B = GlobalGenerator_DCDCv2(opts,
+                                             'dec',
                                              netG_input_nc,
                                              opts.output_nc,
                                              opts.ngf,
@@ -42,7 +44,7 @@ class Pix2PixHDModel_Mapping(BaseModel):
         if len(input_concat.shape) != 4:
             input_concat = tf.expand_dims(input_concat, axis=0)
 
-        label_feature = self.netG_A([input_concat, 'enc'])
+        label_feature = self.netG_A(input_concat)
         label_feature_map = self.mapping_net(label_feature)
 
-        return self.netG_B([label_feature_map, 'dec'])
+        return self.netG_B(label_feature_map)

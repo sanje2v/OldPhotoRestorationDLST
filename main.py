@@ -1,3 +1,5 @@
+import os
+import os.path
 import sys
 import argparse
 import tensorflow as tf
@@ -37,6 +39,9 @@ def main(args):
 
         # Create image enhancement model for stage 1
         model = Pix2PixHDModel_Mapping(opts, name='model')
+        model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+                np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+        model.load_weights(opts.checkpoint).assert_consumed()
 
         # Preprocess and then run each stage
         for i in range(len(input_images)):
@@ -52,26 +57,27 @@ def main(args):
             output_image = model([input_image, mask])
             output_image = np.squeeze(output_image.numpy(), axis=0)
 
-            # Save stage 2 output to file
-            output_image_filename = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR, os.path.basename(input_image_filenames[i]))
-            print(output_image.shape)
-            print(type(output_image))
-            tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=True)
+            # Save stage 1 output to file
+            output_image_dir = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR)
+            os.makedirs(output_image_dir, exist_ok=True)
+            output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
+            output_image = rescale_model_image_output_for_opencv(output_image)
+            tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
             print(INFO("Image Enchancement stage output saved to {:s}.".format(output_image_filename)))
 
             ########## Step 2: Face detection
-            face_dectector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.DLIB_FACE_DETECTION_WEIGHTS))
-            face = face_detector()
+            face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
+            faces = face_detector(output_image)
 
-            if faces:
+            for face in faces:
                 # Save stage 2 output to file
+                output_image_dir = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR)
+                os.makedirs(output_image_dir, exist_ok=True)
                 output_image_filename = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR, os.path.basename(input_image_filenames[i]))
-
+                print(INFO("Face detection stage output saved to {:s}.".format(output_image_filename)))
 
                 ########## Step 3: Face enhancement
                 
-
-        print(model.summary())
 
 
 if __name__ == '__main__':
@@ -89,7 +95,7 @@ if __name__ == '__main__':
         parser.add_argument('--input_folder', required=True, type=lambda x: os.path.abspath(x), help="Folder with image files to process")
         parser.add_argument('--output_folder', type=lambda x: os.path.abspath(x), default=settings.DEFAULT_OUTPUT_FOLDER, help="Folder where to output processed images")
         parser.add_argument('--gpu_id', type=int, default=0, help="GPU device id")
-        parser.add_argument('--checkpoint', type=str, default='Setting_9_epoch_100', help="Checkpoint weights to use")
+        parser.add_argument('--checkpoint', required=True, type=str, help="Checkpoint weights to use")
         parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")
         args = parser.parse_args()
 

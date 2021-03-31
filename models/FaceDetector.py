@@ -1,6 +1,7 @@
 import os.path
 import dlib
 import numpy as np
+import cv2 as cv
 
 from utils import *
 import consts
@@ -10,8 +11,19 @@ import settings
 # NOTE: This class is just a wrapper around 'detect_all_dlib.py' which uses dlib library to
 #       to find faces and return them for the next step of face enhancement.
 class FaceDetector:
-    def _compute_transformation_matrix(img, face_landmarks, normalize, target_face_scale):
-        pass
+    def _standard_face_pts(self):
+        return  np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4], np.float32) / 256.0 - 1.0  # NOTE: In range [-1.0, 1.0]
+
+    def _compute_transformation_matrix(img, face_landmarks, normalize:bool, target_face_scale:float):
+        std_face_pts = self._standard_face_pts()
+        target_face_pts = (std_face_pts * target_face_scale + 1.0) / 2.0 * 256.0
+
+        h, w, c = img.shape
+        if normalize:
+            face_landmarks[:, 0] = face_landmarks[:, 0] / h * 2.0 - 1.0
+            face_landmarks[:, 1] = face_landmarks[:, 1] / w * 2.0 - 1.0
+
+        return cv.estimateRigidTransform(target_face_pts, face_landmarks, fullAffine=False)
 
     def _get_landmark(face_landmarks, id):
         part = face_landmarks.part(id)
@@ -44,7 +56,7 @@ class FaceDetector:
         )
 
 
-    def __init__(self, face_landmarks_weights_filename:str, target_face_scale:float=1.3, output_shape:tuple=(settings.LOAD_SIZE, settings.LOAD_SIZE, consts.NUM_RGB.CHANNELS)):
+    def __init__(self, face_landmarks_weights_filename:str, target_face_scale:float=1.3, output_shape:tuple=(settings.LOAD_SIZE, settings.LOAD_SIZE, consts.NUM_RGB_CHANNELS)):
         if not os.path.isfile(face_landmarks_weights_filename):
             raise FileNotFoundError("Cannot find face landmarks weights file '{:s}' used by dlib library to detect faces in an image!".format(face_landmarks_weights_filename))
 

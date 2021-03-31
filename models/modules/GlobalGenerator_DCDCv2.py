@@ -115,7 +115,7 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
             decoder.add(Conv2DTranspose(min((self.ngf * mult) // 2, self.opts.mc),
                                         kernel_size=self.k_size,
                                         strides=2,
-                                        padding='same',
+                                        padding='valid',
                                         output_padding=o_pad))
             decoder.add(self.norm_layer())
             decoder.add(self.activation_layer())
@@ -126,7 +126,7 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
             decoder.add(Conv2DTranspose(filters=min((self.ngf * mult) // 2, self.opts.mc),
                                         kernel_size=self.k_size,
                                         strides=2,
-                                        padding='same',
+                                        padding='valid',
                                         output_padding=o_pad))
             decoder.add(self.norm_layer())
             decoder.add(self.activation_layer())
@@ -140,11 +140,12 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         return decoder
 
 
-    def __init__(self, opts, input_nc, output_nc, ngf=64, k_size=3, n_downsampling=8, padding_type='reflect',
+    def __init__(self, opts, flow, input_nc, output_nc, ngf=64, k_size=3, n_downsampling=8, padding_type='reflect',
                  norm_layer=BatchNormalization, activation_layer=ReLU, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.opts = opts
+        self.flow = flow
         self.input_nc = input_nc
         self.output_nc = output_nc
         self.ngf = ngf
@@ -154,19 +155,14 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         self.norm_layer = norm_layer
         self.activation_layer = activation_layer
 
-    def build(self, input_shape):
-        self.encoder = self._build_encoder(name='encoder')
-        self.decoder = self._build_decoder(name='decoder')
-
-    def call(self, inputs):
-        x, flow = inputs
-        flow = flow.lower()
-
         if flow == 'enc':
-            return self.encoder(x)
+            self.inner_layer = self._build_encoder(name='encoder')
         elif flow == 'dec':
-            return self.decoder(x)
+            self.inner_layer = self._build_decoder(name='decoder')
         elif flow == 'enc_dec':
-            return self.decoder(self.encoder(x))
+            self.inner_layer = tf.keras.Sequential([self._build_encoder(name='encoder'), self._build_decoder(name='decoder')])
         else:
             raise NotImplementedError("Unsupported flow specified!")
+
+    def call(self, inputs):
+        return self.inner_layer(inputs)

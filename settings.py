@@ -1,5 +1,6 @@
 import os.path
 import collections
+import tensorflow as tf
 import tensorflow_addons as tfa
 
 
@@ -10,8 +11,8 @@ MIN_NUMPY_VERSION = version_tuple(major=1, minor=19)
 
 
 # Filenames and Folder paths
-DLIB_FACE_DETECTION_WEIGHTS = 'shape_predictor_68_face_landmarks.dat'
 WEIGHTS_DIR = 'weights'
+FACE_DETECTION_WEIGHTS = 'shape_predictor_68_face_landmarks.dat'
 IMAGE_ENHANCEMENT_SUBDIR = 'Image_Enhancement'
 FACE_DETECTION_SUBDIR = 'Face_Detection'
 FACE_ENHANCEMENT_SUBDIR = 'Face_Enhancement'
