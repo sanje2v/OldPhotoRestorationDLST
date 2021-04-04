@@ -7,7 +7,7 @@ Official PyTorch implementation can be found [here](https://github.com/microsoft
 TODO
 
 # To improve
-The output images might have a gradient of grey border around their edges which I think might have been caused by accumulation of floating point differences from the implementation of Tensorflow and PyTorch's Instance Normalization layer.
+The output images have a drop shadow-like effect around their edges. Have yet to investigate the source of this problem.
 
 # Requirements
 The following software versions were used for testing the code in this repo.
