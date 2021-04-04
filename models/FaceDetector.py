@@ -14,22 +14,23 @@ class FaceDetector:
     def _standard_face_pts(self):
         return  np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4], np.float32) / 256.0 - 1.0  # NOTE: In range [-1.0, 1.0]
 
-    def _compute_transformation_matrix(img, face_landmarks, normalize:bool, target_face_scale:float):
+    def _compute_transformation_matrix(self, img, face_landmarks, normalize:bool, target_face_scale:float):
         std_face_pts = self._standard_face_pts()
-        target_face_pts = (std_face_pts * target_face_scale + 1.0) / 2.0 * 256.0
+        target_face_pts = ((std_face_pts * target_face_scale + 1.0) / 2.0 * settings.LOAD_SIZE).reshape((5, 2)).astype(np.float32)
 
         h, w, c = img.shape
+        face_landmarks = face_landmarks.astype(np.float32)
         if normalize:
             face_landmarks[:, 0] = face_landmarks[:, 0] / h * 2.0 - 1.0
             face_landmarks[:, 1] = face_landmarks[:, 1] / w * 2.0 - 1.0
 
-        return cv.estimateRigidTransform(target_face_pts, face_landmarks, fullAffine=False)
+        return cv.estimateAffinePartial2D(face_landmarks, target_face_pts)[0]
 
-    def _get_landmark(face_landmarks, id):
+    def _get_landmark(self, face_landmarks, id):
         part = face_landmarks.part(id)
         return (part.x, part.y)
 
-    def _search(face_landmarks):
+    def _search(self, face_landmarks):
         x1, y1 = self._get_landmark(face_landmarks, 36)
         x2, y2 = self._get_landmark(face_landmarks, 39)
         x3, y3 = self._get_landmark(face_landmarks, 42)
@@ -56,13 +57,15 @@ class FaceDetector:
         )
 
 
-    def __init__(self, face_landmarks_weights_filename:str, target_face_scale:float=1.3, output_shape:tuple=(settings.LOAD_SIZE, settings.LOAD_SIZE, consts.NUM_RGB_CHANNELS)):
+    def __init__(self, face_landmarks_weights_filename:str, target_face_scale:float=1.3,
+                 output_shape:tuple=(settings.LOAD_SIZE, settings.LOAD_SIZE)):
         if not os.path.isfile(face_landmarks_weights_filename):
             raise FileNotFoundError("Cannot find face landmarks weights file '{:s}' used by dlib library to detect faces in an image!".format(face_landmarks_weights_filename))
 
         self.face_detector = dlib.get_frontal_face_detector()
         self.landmark_locator = dlib.shape_predictor(face_landmarks_weights_filename)
         self.target_face_scale = target_face_scale
+        self.output_shape = output_shape
 
     def __call__(self, img:np.ndarray):
         assert len(img.shape) == 3, "'img' parameter must be an image array with (H, W, C) channel order."
@@ -76,6 +79,6 @@ class FaceDetector:
             face_landmarks = self._search(self.landmark_locator(img, face))
 
             landmarks_affine = self._compute_transformation_matrix(img, face_landmarks, False, target_face_scale=self.target_face_scale)
-            aligned_faces.append(self._wrap(img, landmarks_affine, output_shape=self.output_shape))
+            aligned_faces.append(cv.warpAffine(img, landmarks_affine, self.output_shape))
 
         return aligned_faces

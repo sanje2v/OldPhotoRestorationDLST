@@ -1,11 +1,10 @@
 import tensorflow as tf
 
-from .BaseModel import BaseModel
 from .modules import *
 import consts
 
 
-class Pix2PixHDModel_Mapping(BaseModel):
+class Pix2PixHDModel_Mapping(tf.keras.Model):
     def __init__(self, opts, *args, **kwargs):
         super().__init__(opts, *args, **kwargs)
 
@@ -34,6 +33,7 @@ class Pix2PixHDModel_Mapping(BaseModel):
                                                 min(opts.ngf * 2**opts.n_downsample_global, opts.mc),
                                                 opts.map_mc,
                                                 opts.mapping_n_block,
+                                                norm_layer=opts.norm,
                                                 name='mapping_net')
 
     def call(self, inputs, training=False):
@@ -44,7 +44,6 @@ class Pix2PixHDModel_Mapping(BaseModel):
         if len(input_concat.shape) != 4:
             input_concat = tf.expand_dims(input_concat, axis=0)
 
-        label_feature = self.netG_A(input_concat)
-        label_feature_map = self.mapping_net(label_feature)
-
-        return self.netG_B(label_feature_map)
+        label_feature = self.netG_A(input_concat, training=training)
+        label_feature_map = self.mapping_net(label_feature, training=training)
+        return self.netG_B(label_feature_map, training=training)

@@ -1,7 +1,7 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ZeroPadding2D, BatchNormalization, ReLU, Lambda, Dropout
+from tensorflow.keras.layers import Conv2D, ZeroPadding2D, Dropout
 
-from . import ReflectionPadding2D
+from . import ReflectionPadding2D, ReplicationPadding2D
 
 
 class ResnetBlock(tf.keras.layers.Layer):
@@ -33,10 +33,13 @@ class ResnetBlock(tf.keras.layers.Layer):
             self.conv_block.add(Dropout(rate=0.5))
 
         if self.padding_type == 'reflect':
+            padding = 'same'
             self.conv_block.add(ReflectionPadding2D(padding=1))
         elif self.padding_type == 'replicate':
+            padding = 'same'
             self.conv_block.add(ReplicationPadding2D(padding=1))
         elif self.padding_type == 'zero':
+            padding = 'valid'
             self.conv_block.add(ZeroPadding2D(padding=1))
 
         self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding='valid'))

@@ -70,5 +70,4 @@ def input_normalize_transform(input_image):
     return (input_image - 0.5) / 0.5
 
 def rescale_model_image_output_for_opencv(img):
-    img = np.clip(((img + 1.0) / 2.0 * 255.0), a_min=0, a_max=255).astype(np.uint8)
-    return img#np.transpose(img, (2, 0, 1))
+    return np.clip(np.floor((img + 1.0) / 2.0 * 255.0), a_min=0., a_max=255.).astype(np.uint8)

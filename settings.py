@@ -1,7 +1,5 @@
 import os.path
 import collections
-import tensorflow as tf
-import tensorflow_addons as tfa
 
 
 version_tuple = collections.namedtuple("Row", ["major", "minor"])
@@ -23,6 +21,3 @@ PROJECT_DESCRIPTION = "Tensorflow implementation of the project 'Bringing Old Ph
 DEFAULT_OUTPUT_FOLDER = "outputs"
 LOAD_SIZE = 256
 LABEL_NC = 18
-
-# Model settings
-BATCH_NORM_CLASS = tfa.layers.InstanceNormalization

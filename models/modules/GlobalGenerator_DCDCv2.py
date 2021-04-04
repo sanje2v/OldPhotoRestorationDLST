@@ -164,5 +164,5 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         else:
             raise NotImplementedError("Unsupported flow specified!")
 
-    def call(self, inputs):
-        return self.inner_layer(inputs)
+    def call(self, inputs, training):
+        return self.inner_layer(inputs, training=training)

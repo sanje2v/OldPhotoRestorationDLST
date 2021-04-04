@@ -35,17 +35,23 @@ def main(args):
                 inner_layer_index = 0
                 conv2d_variables = [x for x in layer.inner_layer.weights if x.name.startswith('conv2d')]
 
-                for variable in conv2d_variables:
+                for i, variable in enumerate(conv2d_variables):
                     if 'kernel' in variable.name:
                         weights = np.transpose(input_weights[inner_layer_list[inner_layer_index]].numpy(), (2, 3, 1, 0))
+                        assert weights.shape == variable.shape, "Weights for '{:s}' being assigned is of a different shape than of variable!".format(variable.name)
                         variable.assign(weights)
                         inner_layer_index += 1
+
                     elif 'bias' in variable.name:
                         bias = input_weights[inner_layer_list[inner_layer_index]].numpy()
+                        assert bias.shape == variable.shape, "Bias for '{:s}' being assigned is of a different shape than of variable!".format(variable.name)
                         variable.assign(bias)
                         inner_layer_index += 1
 
-                print(INFO("All weights values {:s} used.".format("were" if len(conv2d_variables) == inner_layer_index else "weren't"), prefix='\n'))
+                if len(inner_layer_list) == inner_layer_index:
+                    print(INFO("All {:d} weights values were used.".format(len(inner_layer_list)), prefix='\n'))
+                else:
+                    print(CAUTION("Not all {:d} weights values were used.".format(len(inner_layer_list)), prefix='\n'))
         else:
             pass
 

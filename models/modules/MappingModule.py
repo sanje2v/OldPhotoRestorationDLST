@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization, ReLU, Lambda
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU
 
 from ..layers import ResnetBlock
 
@@ -29,10 +29,10 @@ class MappingModule(tf.keras.layers.Layer):
 
         for i in range(self.n_blocks):
             self.inner_layer.add(ResnetBlock(self.mc,
-                                       padding_type=self.padding_type,
-                                       norm_layer=self.norm_layer,
-                                       activation_layer=self.activation_layer,
-                                       dilation=self.opts.mapping_net_dilation))
+                                             padding_type=self.padding_type,
+                                             norm_layer=self.norm_layer,
+                                             activation_layer=self.activation_layer,
+                                             dilation=self.opts.mapping_net_dilation))
 
         for i in range(n_up - 1):
             ic = min(64 * 2**(4 - i), self.mc)
@@ -47,5 +47,5 @@ class MappingModule(tf.keras.layers.Layer):
             self.inner_layer.add(self.activation_layer())
             self.inner_layer.add(Conv2D(filters=opts.feat_dim, kernel_size=1))
 
-    def call(self, inputs):
-        return self.inner_layer(inputs)
+    def call(self, inputs, training):
+        return self.inner_layer(inputs, training=training)
