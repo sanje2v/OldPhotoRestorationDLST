@@ -3,6 +3,7 @@ import tensorflow_addons as tfa
 
 import consts
 
+
 ntest = float('inf')
 results_dir = './results'
 aspect_ratio = 1.0
@@ -44,7 +45,7 @@ checkpoints_dir = 'checkpoints/restoration'
 input_nc = consts.NUM_RGB_CHANNELS      # Num of input image channels
 output_nc = input_nc                    # Num of output image channels
 ngf = 64                                # Num of gen filters in first conv layer
-norm = tfa.layers.InstanceNormalization#InstanceNormalizationWithLimit##
+norm = tfa.layers.InstanceNormalization
 spatio_size = 64
 feat_dim = -1
 use_segmentation_model = False

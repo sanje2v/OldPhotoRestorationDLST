@@ -19,5 +19,4 @@ class ReplicationPadding2D(tf.keras.layers.Layer):
         return tf.pad(x, [[0, 0], [h_pad, h_pad], [w_pad, w_pad], [0, 0]], 'SYMMETRIC')
 
     def get_config(self):
-        config = super(ReflectionPadding2D, self).get_config()
-        return config
+        return super().get_config()
