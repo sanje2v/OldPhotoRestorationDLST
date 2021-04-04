@@ -1,16 +1,16 @@
-# Tensorflow v2+Keras implementation of 'Old Photo Restoration via Deep Latent Space Translation', CVPR 2020 paper
-This is an Tensorflow v2+Keras inference ONLY implemention of [a CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos that suffer from degradations like faded colors, scratches and color spots by jointly the learning from the latent spaces of paired artificial degraded images with real degraded photos.
+# TensorFlow v2+Keras re-implementation of 'Old Photo Restoration via Deep Latent Space Translation', CVPR 2020 paper
+This is a TensorFlow v2+Keras inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly the learning from the latent spaces of paired artificial degraded images and real degraded photos.
 
-Official PyTorch implementation can be found at: https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life .
+Official PyTorch implementation can be found [here](https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life).
 
 # Results
 TODO
 
 # To improve
-The output images might have a gradient of grey border which I think might have been caused by accumulation of floating point differences from the implementation of Tensorflow and PyTorch's Instance Normalization layer.
+The output images might have a gradient of grey border around their edges which I think might have been caused by accumulation of floating point differences from the implementation of Tensorflow and PyTorch's Instance Normalization layer.
 
 # Requirements
-The following software versions were used for testing the code in this repo. Other version combination of software might also work but have not been tested on.
+The following software versions were used for testing the code in this repo.
 * Python 3.7
 * PyTorch 1.8 (for weights conversion)
 * Tensorflow 2.4.1
@@ -20,16 +20,16 @@ The following software versions were used for testing the code in this repo. Oth
 * Other required python libraries are in 'requirements.txt'
 
 # Getting started
-Download all PyTorch and dlib weights from official repo (see top). Convert PyTorch weights to Tensorflow format weights using:
+Download all PyTorch and dlib weights from official repo (see page top). Then convert PyTorch weights to Tensorflow checkpoint format weights using:
 
 `python convert_weights_for_tf.py --input_weights netG_A <Path to VAE_A weights folder>/latest_net_G.pth netG_B <Path to VAE_B weights folder>/latest_net_G.pth mapping_net <Path to mapping net weights folder>/latest_net_mapping_net.pth --stage 1 --output_weights ./weights/Photo_Enhancement/tf_keras/out.weights`
 
-Then you can run inference using:
+Then inference can be done in a folder of input images using:
 
 `python main.py --input_folder <Folder with images> --checkpoint .\weights\Photo_Enhancement\tf_keras\out.weights --gpu_id 0`
 
 # License
->Any part of this source code should ONLY be reused for research purposes. This repo contains some modified source code from other sources who have been credited in source file where they are used.
+>Any part of this source code can ONLY be reused for research purposes with citation. This repo contains some modified source code from third-party sources who have been credited in files where they were used. Any commercial use of any part of this code requires a formal request to this repo's author.
 
 
 # References
