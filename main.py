@@ -50,7 +50,7 @@ def main(args):
                 pass
             else:
                 input_image = input_scale_transform(input_images[i], opts.test_mode.lower(), settings.LOAD_SIZE)
-                mask = tf.zeros_like(input_image)
+                mask = None
             input_image = input_normalize_transform(input_image)
 
             ######### Step 1: Image enhancement

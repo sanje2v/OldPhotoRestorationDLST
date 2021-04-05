@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch as t
 import tensorflow as tf
@@ -27,6 +28,7 @@ def main(args):
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                    np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
 
+            # CAUTION: This code assumes that PyTorch saves weights in the order of execution of layers
             for layer in model.layers:
                 input_weights = opts.input_weights[layer.name]
                 print(layer.name)
@@ -55,6 +57,8 @@ def main(args):
         else:
             pass
 
+        # Create all the intermediate directories and then save weights as TensorFlow checkpoint
+        os.makedirs(os.path.dirname(opts.output_weights), exist_ok=True)
         model.save_weights(opts.output_weights, save_format='tf')
 
 

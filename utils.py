@@ -40,9 +40,7 @@ class ValidateLayerNamesAndWeightsFile(argparse.Action):
 
             if not os.path.isfile(weights_filename):
                 raise ValueError("{:s} weights file specified in '--input_weights' doesn't exists!".format(weights_filename))
-
             input_weights_dict[layer_name] = os.path.abspath(weights_filename)
-
         setattr(namespace, self.dest, input_weights_dict)
 
 
@@ -58,9 +56,10 @@ def input_scale_transform(input_image, test_mode, load_size):
             w = (w * load_size) // input_image.shape[0]
 
     if test_mode in ['scale', 'full']:
-        h = int(round(h / 4) * 4)
-        w = int(round(w / 4) * 4)
-        input_image = tf.image.resize(input_image, (h, w), tf.image.ResizeMethod.BILINEAR)
+        if any([x % 4 != 0 for x in (h, w)]):
+            h = int(round(h / 4) * 4)
+            w = int(round(w / 4) * 4)
+            input_image = tf.image.resize(input_image, (h, w), tf.image.ResizeMethod.BILINEAR)
     else:
         input_image = tf.image.resize_with_crop_or_pad(input_image, load_size, load_size)
 
