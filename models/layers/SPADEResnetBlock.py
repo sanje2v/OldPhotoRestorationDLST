@@ -22,17 +22,18 @@ class SPADEResnetBlock(tf.keras.layers.Layer):
         conv_s = Conv2D(fout, kernel_size=1, use_bias=False) if fin != fout else Lambda(lambda x: x)
 
         if use_spectral_norm:
-            conv_0 = tfa.layers.SpectralNormalization(conv_0)
-            conv_1 = tfa.layers.SpectralNormalization(conv_1)
+            conv_0 = tfa.layers.SpectralNormalization(conv_0.layers[-1])
+            conv_1 = tfa.layers.SpectralNormalization(conv_1.layers[-1])
             conv_s = tfa.layers.SpectralNormalization(conv_s) if fin != fout else Lambda(lambda x: x)
 
-        norm_0 = SPADE(opts, fin, opts.semantic_nc) if use_spade else Lambda(lambda x: x)
-        norm_1 = SPADE(opts, fmiddle, opts.semantic_nc) if use_spade else Lambda(lambda x: x)
-        norm_s = SPADE(opts, fin, opts.semantic_nc) if fin != fout and use_spade else Lambda(lambda x: x)
+        norm_0 = SPADE(opts, fin, opts.semantic_nc)
+        norm_1 = SPADE(opts, fmiddle, opts.semantic_nc)
+        norm_s = SPADE(opts, fin, opts.semantic_nc) if fin != fout else Lambda(lambda x: x[0])
 
-        self.inner_layer = [tf.keras.Sequential([norm_s, conv_s]),
-                            tf.keras.Sequential([norm_0, LeakyReLU(alpha=2e-1), conv_0]),
-                            tf.keras.Sequential([norm_1, LeakyReLU(alpha=2e-1), conv_1])]
+        self.inner_layer = []
+        self.inner_layer.append(tf.keras.Sequential([norm_s, conv_s]) if fin != fout else Lambda(lambda x: x[0]))
+        self.inner_layer.extend([tf.keras.Sequential([norm_0, LeakyReLU(alpha=2e-1), conv_0]),
+                                 tf.keras.Sequential([norm_1, LeakyReLU(alpha=2e-1), conv_1])])
 
     def call(self, inputs, training):
         x, seg, degraded_image = inputs

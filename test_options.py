@@ -55,6 +55,7 @@ semantic_nc = 18
 num_upsampling_layers = 'normal'
 crop_size = 256
 injection_layer = 'all'
+preprocess_mode = 'resize'
 
 if Quality_restore:
     name = 'mapping_quality'

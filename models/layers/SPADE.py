@@ -15,16 +15,17 @@ class SPADE(tf.keras.layers.Layer):
         nhidden = 128
         pw = ks // 2
 
-        mlp_shared = tf.keras.Sequential([Lambda(lambda segmap, degraded_face: degraded_face if opts.no_parsing_map else tf.concat([segmap, degraded_face], axis=3)),
+        mlp_shared = tf.keras.Sequential([Lambda(lambda x: x[1] if opts.no_parsing_map else tf.concat([x[0], x[1]], axis=3)),
                                           ZeroPadding2D(padding=pw),
-                                          Conv2D(nhidden, kernel_size=ks, padding='same'),
+                                          Conv2D(nhidden, kernel_size=ks, padding='valid'),
                                           ReLU()])
         mlp_gamma = tf.keras.Sequential([ZeroPadding2D(padding=pw),
-                                         Conv2D(norm_nc, kernel_size=ks, padding='same')])
+                                         Conv2D(norm_nc, kernel_size=ks, padding='valid')])
         mlp_beta = tf.keras.Sequential([ZeroPadding2D(padding=pw),
-                                        Conv2D(norm_nc, kernel_size=ks, padding='same')])
+                                        Conv2D(norm_nc, kernel_size=ks, padding='valid')])
+        param_free_norm = self.norm_layer(center=False, scale=False)
 
-        self.inner_layer = [mlp_shared, mlp_gamma, mlp_beta]
+        self.inner_layer = [mlp_shared, mlp_gamma, mlp_beta, param_free_norm]
 
     def call(self, inputs, training):
         x, segmap, degraded_image = inputs
@@ -37,6 +38,6 @@ class SPADE(tf.keras.layers.Layer):
         beta = self.inner_layer[2](actv, training=training)
 
         # Generate parameter free normalized activations
-        normalized = self.norm_layer(center=False, scale=False)(x, training=training)
+        normalized = self.inner_layer[3](x, training=training)
 
         return normalized * (1 + gamma) + beta

@@ -37,12 +37,16 @@ def main(args):
                                                       dtype=tf.dtypes.float32,
                                                       expand_animations=False))  # NOTE: Image tensor range is 0.0-1.0
 
-        # Create image enhancement model for stage 1 and load weights
-        model = ImageEnhancer(opts)
+        # Create image enhancement model for stages and load their weights
+        image_enhancer = ImageEnhancer(opts)
+        face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
+        face_enhancer = FaceEnhancer(opts)
+
+        # Load model weights
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
-        model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-               np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-        model.load_weights(opts.checkpoint).assert_consumed()
+        image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+                        np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+        image_enhancer.load_weights(opts.checkpoint).assert_consumed()
 
         # Preprocess and then run each stage
         for i in range(len(input_images)):
@@ -55,7 +59,7 @@ def main(args):
 
             ######### Step 1: Image enhancement
             print(INFO("Running Image Enhancement stage...", prefix='\n'))
-            output_image = model([input_image, mask])
+            output_image = image_enhancer([input_image, mask])
             output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
 
             # Save stage 1 output to file
@@ -67,7 +71,6 @@ def main(args):
 
             ########## Step 2: Face detection
             print(INFO("Running Face Detection stage...", prefix='\n'))
-            face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
             faces = face_detector(output_image)
 
             for face_id, face in enumerate(faces):
@@ -80,7 +83,15 @@ def main(args):
 
                 ########## Step 3: Face enhancement
                 print(INFO("Running Face Enhancement stage...", prefix='\n'))
-                face_enhancer = FaceEnchancer(os.path.join(settings.WEIGHTS_DIR, settings.FACE_ENHANCEMENT_SUBDIR, settings.FACE_ENHANCEMENT_WEIGHTS))
+                degraded_image = input_scale_transform((face / 255.).astype(np.float32), opts.test_mode.lower(), settings.LOAD_SIZE)
+                degraded_image = tf.convert_to_tensor(input_normalize_transform(degraded_image))
+                seg = tf.zeros_like(degraded_image)
+                output_image = face_enhancer([seg, degraded_image], training=False)
+                output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
+                output_image_dir = os.path.join(opts.output_folder, settings.FACE_ENHANCEMENT_SUBDIR)
+                os.makedirs(output_image_dir, exist_ok=True)
+                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
+                tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
 
 
 

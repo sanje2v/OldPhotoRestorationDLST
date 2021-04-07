@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Conv2D, Lambda, UpSampling2D, LeakyReLU
+from tensorflow.keras.layers import Dense, Conv2D, Lambda, UpSampling2D, LeakyReLU, ZeroPadding2D
 from tensorflow.keras.activations import tanh
 
 from .layers import SPADEResnetBlock, SPADEResnetBlock_non_spade
@@ -33,35 +33,36 @@ class FaceEnhancer(tf.keras.Model):
         # Build SPADEGenerator
         netG = []
         netG.append(tf.keras.Sequential([Lambda(lambda x: tf.image.resize(x, (self.sh, self.sw), method=tf.image.ResizeMethod.BILINEAR)),
-                                         Conv2D(16 * opts.ngf, kernel_size=3, padding='valid', name='fc')]))
+                                         #ZeroPadding2D(padding=1),
+                                         Conv2D(16 * opts.ngf, kernel_size=3, padding='same', name='fc')]))
 
         opts.injection_layer = opts.injection_layer.casefold()
         use_spade = opts.injection_layer in ['all' , '1']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, name='head_0'),
-                                         Lambda(lambda x: UpSampling2D(size=2))]))
+                                         UpSampling2D(size=2)]))
 
         name = ['G_middle_{:d}'.format(i) for i in range(2)]
         use_spade = opts.injection_layer in ['all', '2']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, name=name[0]),
-                                         Lambda(lambda x: UpSampling2D(size=2)) if opts.num_upsampling_layers in ['more', 'most'] else Lambda(lambda x: x),
-                                         SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, name=name[1]),
-                                         Lambda(lambda x: UpSampling2D(size=2))]))
+                                         UpSampling2D(size=2) if opts.num_upsampling_layers in ['more', 'most'] else Lambda(lambda x: x)]))
+        netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, name=name[1]),
+                                         UpSampling2D(size=2)]))
 
         use_spade = opts.injection_layer in ['all', '3']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 16 * opts.ngf, 8 * opts.ngf, use_spade=use_spade, name='up_0'),
-                                         Lambda(lambda x: UpSampling2D(size=2))]))
+                                         UpSampling2D(size=2)]))
 
         use_spade = opts.injection_layer in ['all', '4']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 8 * opts.ngf, 4 * opts.ngf, use_spade=use_spade, name='up_1'),
-                                         Lambda(lambda x: UpSampling2D(size=2))]))
+                                         UpSampling2D(size=2)]))
 
         use_spade = opts.injection_layer in ['all', '5']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 4 * opts.ngf, 2 * opts.ngf, use_spade=use_spade, name='up_2'),
-                                         Lambda(lambda x: UpSampling2D(size=2))]))
+                                         UpSampling2D(size=2)]))
 
         use_spade = opts.injection_layer in ['all', '6']
         netG.append(tf.keras.Sequential([SPADEResnetBlock(opts, 2 * opts.ngf, 1 * opts.ngf, use_spade=use_spade, name='up_3'),
-                                         Lambda(lambda x: UpSampling2D(size=2)) if opts.num_upsampling_layers == 'most' else Lambda(lambda x: x)]))
+                                         UpSampling2D(size=2) if opts.num_upsampling_layers == 'most' else Lambda(lambda x: x)]))
 
         if opts.num_upsampling_layers == 'most':
             netG.append(SPADEResnetBlock(1 * opts.ngf, opts.ngf // 2, opts, name='up_4'))
@@ -81,6 +82,12 @@ class FaceEnhancer(tf.keras.Model):
             raise NotImplementedError("Training '{:s}' instance is NOT supported yet.".format(self.__class__.name))
 
         seg, degraded_image = inputs
+
+        if len(seg.shape) != 4:
+            seg = tf.expand_dims(seg, axis=0)
+
+        if len(degraded_image.shape) != 4:
+            degraded_image = tf.expand_dims(degraded_image, axis=0)
 
         x = self.inner_layer[0](degraded_image, training=training)
 
