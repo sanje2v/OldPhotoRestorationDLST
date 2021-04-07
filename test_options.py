@@ -50,6 +50,11 @@ spatio_size = 64
 feat_dim = -1
 use_segmentation_model = False
 mapping_net_dilation = 1                # This parameter is the dilation size of the translation net
+no_parsing_map = True
+semantic_nc = 18
+num_upsampling_layers = 'normal'
+crop_size = 256
+injection_layer = 'all'
 
 if Quality_restore:
     name = 'mapping_quality'

@@ -3,10 +3,9 @@ import os.path
 import sys
 import argparse
 import tensorflow as tf
-import tensorboard as tb
 import numpy as np
 
-from models import Pix2PixHDModel_Mapping, FaceDetector
+from models import *
 import consts
 import settings
 import test_options
@@ -39,9 +38,10 @@ def main(args):
                                                       expand_animations=False))  # NOTE: Image tensor range is 0.0-1.0
 
         # Create image enhancement model for stage 1 and load weights
-        model = Pix2PixHDModel_Mapping(opts)
+        model = ImageEnhancer(opts)
+        # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
         model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-               np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])    # Need to eagerly create layer to apply weights
+               np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
         model.load_weights(opts.checkpoint).assert_consumed()
 
         # Preprocess and then run each stage
@@ -54,8 +54,7 @@ def main(args):
             input_image = input_normalize_transform(input_image)
 
             ######### Step 1: Image enhancement
-            print(INFO("Running Image Enhancement stage..."))
-
+            print(INFO("Running Image Enhancement stage...", prefix='\n'))
             output_image = model([input_image, mask])
             output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
 
@@ -67,19 +66,22 @@ def main(args):
             print(INFO("Image Enhancement stage output saved to {:s}.".format(output_image_filename)))
 
             ########## Step 2: Face detection
+            print(INFO("Running Face Detection stage...", prefix='\n'))
             face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
             faces = face_detector(output_image)
 
-            for i, face in enumerate(faces):
+            for face_id, face in enumerate(faces):
                 # Save stage 2 output to file
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
-                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(i, os.path.basename(input_image_filenames[i])))
+                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
                 tf.keras.preprocessing.image.save_img(output_image_filename, face, scale=False)
                 print(INFO("Face detection stage output saved to {:s}.".format(output_image_filename)))
 
                 ########## Step 3: Face enhancement
-                
+                print(INFO("Running Face Enhancement stage...", prefix='\n'))
+                face_enhancer = FaceEnchancer(os.path.join(settings.WEIGHTS_DIR, settings.FACE_ENHANCEMENT_SUBDIR, settings.FACE_ENHANCEMENT_WEIGHTS))
+
 
 
 if __name__ == '__main__':

@@ -1,2 +1,3 @@
-from .Pix2PixHDModel_Mapping import Pix2PixHDModel_Mapping
+from .ImageEnhancer import ImageEnhancer
 from .FaceDetector import FaceDetector
+from .FaceEnhancer import FaceEnhancer

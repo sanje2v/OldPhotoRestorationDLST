@@ -1,6 +1,13 @@
 # TensorFlow v2+Keras re-implementation of 'Old Photo Restoration via Deep Latent Space Translation', CVPR 2020 paper
 This is a TensorFlow v2+Keras inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos.
 
+The whole process consists of the following steps:
+* Stage 1 - Image enchancement
+    1. Quality restoration OR
+    2. Quality restoration with scratch mask
+* Stage 2 - Face detection
+* Stage 3 - Face enchancement
+
 Official PyTorch implementation can be found [here](https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life).
 
 *[25th March 2021] The official repository has been updated with training code for the model. It is unlikely that this new changes will be re-implemented here.*
@@ -31,7 +38,8 @@ NOTE: As of the date of the publication of this repo, DLib is only available for
 # Getting started
 Download all PyTorch and DLib weights from official repo (see page top). Then convert PyTorch weights to Tensorflow checkpoint format weights using:
 
-`python convert_weights_for_tf.py --input_weights netG_A <Path to VAE_A weights folder>/latest_net_G.pth netG_B <Path to VAE_B weights folder>/latest_net_G.pth mapping_net <Path to mapping net weights folder>/latest_net_mapping_net.pth --stage 1 --output_weights ./weights/Photo_Enhancement/tf_keras/out.weights`
+1. `python convert_weights_for_tf.py --input_weights netG_A <Path to VAE_A weights folder>/latest_net_G.pth netG_B <Path to VAE_B weights folder>/latest_net_G.pth mapping_net <Path to mapping net weights folder>/latest_net_mapping_net.pth --stage 1 --output_weights ./weights/Photo_Enhancement/tf_keras/out.weights`
+2. `python convert_weights_for_tf.py --input_weights netG_A <Path to VAE_A weights folder>/latest_net_G.pth netG_B <Path to VAE_B weights folder>/latest_net_G.pth mapping_net <Path to mapping net weights folder>/latest_net_mapping_net.pth --stage 3 --output_weights ./weights/Image_Enhancement/tf_keras/out.weights`
 
 Then inference can be done in a folder of input images using:
 

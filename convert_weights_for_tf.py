@@ -4,7 +4,7 @@ import torch as t
 import tensorflow as tf
 import numpy as np
 
-from models import Pix2PixHDModel_Mapping
+from models import *
 import consts
 import settings
 from utils import *
@@ -24,11 +24,11 @@ def main(args):
 
         if opts.stage == 1:
             # Create the model instance and run it eagerly so that all its layers are constructed
-            model = Pix2PixHDModel_Mapping(opts)
+            model = ImageEnhancer(opts)
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                    np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
 
-            # CAUTION: This code assumes that PyTorch saves weights in the order of execution of layers
+            # CAUTION: This code assumes that PyTorch saves weights in the order of layers
             for layer in model.layers:
                 input_weights = opts.input_weights[layer.name]
                 print(layer.name)

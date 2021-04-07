@@ -38,7 +38,19 @@
     <Compile Include="models\FaceDetector.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="models\FaceEnhancer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\layers\ReplicationPadding2D.py" />
+    <Compile Include="models\layers\SPADE.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\SPADEResnetBlock.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\SPADEResnetBlock_non_spade.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\modules\GlobalGenerator_DCDCv2.py">
       <SubType>Code</SubType>
     </Compile>
@@ -60,7 +72,7 @@
     <Compile Include="models\modules\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="models\Pix2PixHDModel_Mapping.py">
+    <Compile Include="models\ImageEnhancer.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\__init__.py">
