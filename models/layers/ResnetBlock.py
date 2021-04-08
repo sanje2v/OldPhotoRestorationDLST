@@ -19,13 +19,16 @@ class ResnetBlock(tf.keras.layers.Layer):
         self.conv_block = tf.keras.Sequential(name='conv_block')
 
         if self.padding_type == 'reflect':
+            padding = 'valid'
             self.conv_block.add(ReflectionPadding2D(self.dilation))
         elif self.padding_type == 'replicate':
+            padding = 'valid'
             self.conv_block.add(ReplicationPadding2D(self.dilation))
         elif self.padding_type == 'zero':
+            padding = 'same'
             self.conv_block.add(ZeroPadding2D(padding=self.dilation))
 
-        self.conv_block.add(Conv2D(self.dim, kernel_size=3, padding='valid', dilation_rate=self.dilation))
+        self.conv_block.add(Conv2D(self.dim, kernel_size=3, padding=padding, dilation_rate=self.dilation))
         self.conv_block.add(self.norm_layer())
         self.conv_block.add(self.activation_layer())
 
@@ -33,13 +36,13 @@ class ResnetBlock(tf.keras.layers.Layer):
             self.conv_block.add(Dropout(rate=0.5))
 
         if self.padding_type == 'reflect':
-            padding = 'same'
+            padding = 'valid'
             self.conv_block.add(ReflectionPadding2D(padding=1))
         elif self.padding_type == 'replicate':
-            padding = 'same'
+            padding = 'valid'
             self.conv_block.add(ReplicationPadding2D(padding=1))
         elif self.padding_type == 'zero':
-            padding = 'valid'
+            padding = 'same'
             self.conv_block.add(ZeroPadding2D(padding=1))
 
         self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding='valid'))

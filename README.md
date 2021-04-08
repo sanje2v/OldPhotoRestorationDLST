@@ -6,7 +6,8 @@ The whole process consists of the following steps:
     1. Quality restoration OR
     2. Quality restoration with scratch mask
 * Stage 2 - Face detection
-* Stage 3 - Face enchancement
+* Stage 3 - Face enhancement
+* Stage 4 - Blend enhanced face image back into enhanced image
 
 Official PyTorch implementation can be found [here](https://github.com/microsoft/Bringing-Old-Photos-Back-to-Life).
 

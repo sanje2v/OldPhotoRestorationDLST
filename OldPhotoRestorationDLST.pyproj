@@ -13,7 +13,7 @@
     <RootNamespace>OldPhotoRestorationDLST</RootNamespace>
     <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--input_folder C:\Users\Sanjeev\Desktop\Bringing-Old-Photos-Back-to-Life\imgs\totest\specific --checkpoint C:\Users\Sanjeev\source\repos\OldPhotoRestorationDLST\weights\Photo_Enhancement\tf_keras\out.weights</CommandLineArguments>
+    <CommandLineArguments>--input_folder C:\Users\Sanjeev\Desktop\Bringing-Old-Photos-Back-to-Life\imgs\totest\specific --checkpoint ./weights/Photo_Enhancement/tf_keras/out.weights ./weights/Face_Enhancement/tf_keras/out.weights</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
     <InterpreterArguments>
@@ -46,9 +46,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\layers\SPADEResnetBlock.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="models\layers\SPADEResnetBlock_non_spade.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\modules\GlobalGenerator_DCDCv2.py">

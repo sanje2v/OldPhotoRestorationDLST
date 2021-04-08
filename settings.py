@@ -14,6 +14,7 @@ FACE_DETECTION_WEIGHTS = 'shape_predictor_68_face_landmarks.dat'
 IMAGE_ENHANCEMENT_SUBDIR = 'Image_Enhancement'
 FACE_DETECTION_SUBDIR = 'Face_Detection'
 FACE_ENHANCEMENT_SUBDIR = 'Face_Enhancement'
+BLENDING_SUBDIR = 'Blending'
 
 
 # Default commandline values

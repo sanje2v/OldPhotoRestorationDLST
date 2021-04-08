@@ -4,6 +4,7 @@ import sys
 import argparse
 import tensorflow as tf
 import numpy as np
+from copy import deepcopy
 
 from models import *
 import consts
@@ -40,13 +41,19 @@ def main(args):
         # Create image enhancement model for stages and load their weights
         image_enhancer = ImageEnhancer(opts)
         face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
+        #opts2 = deepcopy(opts)
+        opts.label_nc = 18
         face_enhancer = FaceEnhancer(opts)
 
         # Load model weights
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
         image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                         np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-        image_enhancer.load_weights(opts.checkpoint).assert_consumed()
+        image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
+
+        face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+                       np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+        face_enhancer.load_weights(opts.checkpoint[1]).assert_consumed()
 
         # Preprocess and then run each stage
         for i in range(len(input_images)):
@@ -69,7 +76,7 @@ def main(args):
             tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
             print(INFO("Image Enhancement stage output saved to {:s}.".format(output_image_filename)))
 
-            ########## Step 2: Face detection
+            ######### Step 2: Face detection
             print(INFO("Running Face Detection stage...", prefix='\n'))
             faces = face_detector(output_image)
 
@@ -83,15 +90,21 @@ def main(args):
 
                 ########## Step 3: Face enhancement
                 print(INFO("Running Face Enhancement stage...", prefix='\n'))
-                degraded_image = input_scale_transform((face / 255.).astype(np.float32), opts.test_mode.lower(), settings.LOAD_SIZE)
-                degraded_image = tf.convert_to_tensor(input_normalize_transform(degraded_image))
-                seg = tf.zeros_like(degraded_image)
-                output_image = face_enhancer([seg, degraded_image], training=False)
+                degraded_image = input_scale_transform((face.astype(np.float32) / 255.), opts.test_mode.lower(), settings.LOAD_SIZE)
+                degraded_image = tf.expand_dims(tf.convert_to_tensor(input_normalize_transform(degraded_image)), axis=0)
+                seg = tf.zeros([1, settings.LOAD_SIZE, settings.LOAD_SIZE, opts.label_nc], dtype=degraded_image.dtype)
+                #print("HERE")
+                #print(degraded_image.shape)
+                #print(seg.shape)
+                output_image = face_enhancer([seg, degraded_image])
                 output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_ENHANCEMENT_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
                 output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
                 tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
+
+                ########## Step 4: Blending face back
+
 
 
 
@@ -110,7 +123,7 @@ if __name__ == '__main__':
         parser.add_argument('--input_folder', required=True, type=lambda x: os.path.abspath(x), help="Folder with image files to process")
         parser.add_argument('--output_folder', type=lambda x: os.path.abspath(x), default=settings.DEFAULT_OUTPUT_FOLDER, help="Folder where to output processed images")
         parser.add_argument('--gpu_id', required=False, type=int, default=-1, help="GPU device id OR integer less than 0 for CPU device")
-        parser.add_argument('--checkpoint', required=True, type=str, help="Checkpoint weights to use")
+        parser.add_argument('--checkpoint', required=True, nargs=2, metavar=("IMAGE_ENHANCEMENT_WEIGHTS", "FACE_ENHANCEMENT_WEIGHTS"), type=str, help="Checkpoint weights to use")
         parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")
         args = parser.parse_args()
 

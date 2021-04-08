@@ -1,6 +1,5 @@
 import os
 import os.path
-import glob
 import argparse
 import termcolor
 import tensorflow as tf
@@ -20,7 +19,6 @@ def FATAL(text, prefix=''):
 def check_version(version, major, minor):
     if type(version) == str:
         version = tuple(int(x) for x in version.split('.'))
-
     return version[0] >= major and version[1] >= minor
 
 def getFilesWithExtension(dir, extension_or_tuple, with_path=False):
@@ -62,7 +60,6 @@ def input_scale_transform(input_image, test_mode, load_size):
             input_image = tf.image.resize(input_image, (h, w), tf.image.ResizeMethod.BILINEAR)
     else:
         input_image = tf.image.resize_with_crop_or_pad(input_image, load_size, load_size)
-
     return input_image
 
 def input_normalize_transform(input_image):
@@ -70,3 +67,10 @@ def input_normalize_transform(input_image):
 
 def rescale_model_image_output_for_opencv(img):
     return np.clip(np.floor((img + 1.0) / 2.0 * 255.0), a_min=0., a_max=255.).astype(np.uint8)
+
+
+def iterative_call(funcs_list, initial_input, *args, **kwargs):
+    x = initial_input
+    for func in funcs_list:
+        x = func(x, *args, **kwargs)
+    return x
