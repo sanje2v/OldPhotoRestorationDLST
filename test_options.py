@@ -1,5 +1,6 @@
 import os.path
 import tensorflow_addons as tfa
+import functools
 
 import consts
 
@@ -45,7 +46,7 @@ checkpoints_dir = 'checkpoints/restoration'
 input_nc = consts.NUM_RGB_CHANNELS      # Num of input image channels
 output_nc = input_nc                    # Num of output image channels
 ngf = 64                                # Num of gen filters in first conv layer
-norm = tfa.layers.InstanceNormalization
+norm = functools.partial(tfa.layers.InstanceNormalization, epsilon=1e-05)
 spatio_size = 64
 feat_dim = -1
 use_segmentation_model = False

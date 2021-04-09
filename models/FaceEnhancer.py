@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, Lambda, UpSampling2D, LeakyReLU
+from tensorflow.keras.layers import Conv2D, Lambda, UpSampling2D, LeakyReLU, ZeroPadding2D
 from tensorflow.keras.activations import tanh
 
 from .layers import SPADEResnetBlock
@@ -33,7 +33,7 @@ class FaceEnhancer(tf.keras.Model):
 
         # Build SPADEGenerator
         netG = []
-        netG.append([Lambda(lambda x: tf.image.resize(x, (self.sh, self.sw), method=tf.image.ResizeMethod.BILINEAR)),
+        netG.append([Lambda(lambda x: tf.image.resize(x, (self.sh, self.sw), method=tf.image.ResizeMethod.BILINEAR), trainable=False),
                      Conv2D(16 * opts.ngf, kernel_size=3, padding='same', name='fc')])
 
         opts.injection_layer = opts.injection_layer.casefold()
@@ -44,7 +44,7 @@ class FaceEnhancer(tf.keras.Model):
         name = ['G_middle_{:d}'.format(i) for i in range(2)]
         use_spade = opts.injection_layer in ['all', '2']
         netG.append([SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, use_spectral_norm=True, name=name[0]),
-                     UpSampling2D(size=2) if opts.num_upsampling_layers in ['more', 'most'] else Lambda(lambda x: x)])
+                     UpSampling2D(size=2) if opts.num_upsampling_layers in ['more', 'most'] else Lambda(lambda x: x, trainable=False)])
         netG.append([SPADEResnetBlock(opts, 16 * opts.ngf, 16 * opts.ngf, use_spade=use_spade, use_spectral_norm=True, name=name[1]),
                      UpSampling2D(size=2)])
 
@@ -72,7 +72,7 @@ class FaceEnhancer(tf.keras.Model):
 
         netG.append([LeakyReLU(alpha=2e-1),
                      Conv2D(3, kernel_size=3, padding='valid', name='conv_img'),
-                     Lambda(lambda x: tanh(x))])
+                     Lambda(lambda x: tanh(x), trainable=False)])
 
         self.inner_layers = netG
 
@@ -83,6 +83,9 @@ class FaceEnhancer(tf.keras.Model):
 
         seg, degraded_image = inputs
 
+        #####REMOVE
+        #degraded_image = tf.ones_like(degraded_image)
+
         if len(seg.shape) != 4:
             seg = tf.expand_dims(seg, axis=0)
 
@@ -91,7 +94,17 @@ class FaceEnhancer(tf.keras.Model):
 
         x = iterative_call(self.inner_layers[0], degraded_image, training=training)
 
+        #####REMOVE
+        #print()
+        #k = tf.keras.layers.Flatten()(x)[0][0:20]
+        #print(x.shape)
+        #print(k)
+
         for i in range(1, len(self.inner_layers) - 1):
             x = iterative_call(self.inner_layers[i], [x, seg, degraded_image], training=training)
+
+            #k = tf.keras.layers.Flatten()(x)[0][0:20]
+            #print(x.shape)
+            #print(k)
 
         return iterative_call(self.inner_layers[-1], x, training=training)

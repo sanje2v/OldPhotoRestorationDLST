@@ -2,6 +2,7 @@ import os
 import argparse
 import torch as t
 import tensorflow as tf
+from tensorflow_addons.layers import SpectralNormalization
 import numpy as np
 
 from models import *
@@ -69,16 +70,24 @@ def main(args):
 
                 if name in input_weights:
                     weights = input_weights[name].numpy()
-                    if len(weights.shape) > 1:
+                    if len(weights.shape) == 4:
                         weights = np.transpose(weights, (2, 3, 1, 0))
                     elif len(variable.shape) == 2:
                         weights = weights.reshape((1, weights.size))
+
                     assert weights.shape == variable.shape, "Weights for '{:s}' being assigned is of a different shape than of variable!".format(variable.name)
                     variable.assign(weights)
 
                     unused_keys.remove(name)
                 else:
                     raise ValueError("Couldn't find weight for variable '{:s}'!".format(variable.name))
+
+            # CAUTION: It is necessary to call 'normalize()' on all 'SpectralNormalization' layers as we
+            # only loaded original weights and 'u' values to their variables
+            for module in model.submodules:
+                if isinstance(module, SpectralNormalization):
+                    print("!")
+                    module.normalize_weights()
 
             if len(unused_keys) > 0:
                 print(CAUTION("The following weights key(s) were unused: {:}.".format(unused_keys)))

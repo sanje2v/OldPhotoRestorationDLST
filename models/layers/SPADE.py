@@ -17,7 +17,7 @@ class SPADE(tf.keras.layers.Layer):
         nhidden = 128
         pw = ks // 2
 
-        mlp_shared = [Lambda(lambda x: x[1] if opts.no_parsing_map else tf.concat([x[0], x[1]], axis=3)),
+        mlp_shared = [Lambda(lambda x: x[1] if opts.no_parsing_map else tf.concat([x[0], x[1]], axis=3), trainable=False),
                       ZeroPadding2D(padding=pw),
                       Conv2D(nhidden, kernel_size=ks, padding='valid', name='mlp_shared'),
                       ReLU()]
@@ -25,7 +25,7 @@ class SPADE(tf.keras.layers.Layer):
                      Conv2D(norm_nc, kernel_size=ks, padding='valid', name='mlp_gamma')]
         mlp_beta = [ZeroPadding2D(padding=pw),
                     Conv2D(norm_nc, kernel_size=ks, padding='valid', name='mlp_beta')]
-        param_free_norm = self.norm_layer(center=False, scale=False, name='param_free_norm')
+        param_free_norm = self.norm_layer(center=False, scale=False, momentum=0.1, epsilon=1e-5, name='param_free_norm')
 
         self.inner_layers = [mlp_shared, mlp_gamma, mlp_beta, param_free_norm]
 
