@@ -59,8 +59,6 @@ def main(args):
             model = FaceEnhancer(opts)
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                    np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-            #import pprint
-            #pprint.pprint([x.name for x in model.layers])
 
             input_weights = opts.input_weights[model.name]
             unused_keys = list(input_weights.keys())
@@ -86,15 +84,15 @@ def main(args):
             # only loaded original weights and 'u' values to their variables
             for module in model.submodules:
                 if isinstance(module, SpectralNormalization):
-                    print("!")
                     module.normalize_weights()
 
             if len(unused_keys) > 0:
-                print(CAUTION("The following weights key(s) were unused: {:}.".format(unused_keys)))
+                print(CAUTION("The following weights key(s) were unused:\n{:}.".format(unused_keys)))
 
         # Create all the intermediate directories and then save weights as TensorFlow checkpoint
         os.makedirs(os.path.dirname(opts.output_weights), exist_ok=True)
         model.save_weights(opts.output_weights, save_format='tf')
+
 
 def to_pytorch_like_name(name, prefix_len_to_remove=0):
     name = name[prefix_len_to_remove:].replace('/', '.')
@@ -118,6 +116,7 @@ def to_pytorch_like_name(name, prefix_len_to_remove=0):
     name = name.replace('moving_mean:0', 'running_mean')
     name = name.replace('moving_variance:0', 'running_var')
     return name
+
 
 if __name__ == '__main__':
     try:

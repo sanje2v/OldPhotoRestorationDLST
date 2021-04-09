@@ -4,7 +4,6 @@ import sys
 import argparse
 import tensorflow as tf
 import numpy as np
-from copy import deepcopy
 
 from models import *
 import consts
@@ -41,9 +40,9 @@ def main(args):
         # Create image enhancement model for stages and load their weights
         image_enhancer = ImageEnhancer(opts)
         face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
-        #opts2 = deepcopy(opts)
         opts.label_nc = 18
         face_enhancer = FaceEnhancer(opts)
+        face_blender = FaceBlender()
 
         # Load model weights
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
@@ -66,44 +65,51 @@ def main(args):
 
             ######### Step 1: Image enhancement
             print(INFO("Running Image Enhancement stage...", prefix='\n'))
-            output_image = image_enhancer([input_image, mask])
-            output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
+            enhanced_image = image_enhancer([input_image, mask])
+            enhanced_image = np.squeeze(rescale_model_image_output_for_opencv(enhanced_image.numpy()), axis=0)
 
             # Save stage 1 output to file
             output_image_dir = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR)
             os.makedirs(output_image_dir, exist_ok=True)
             output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
-            tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
+            tf.keras.preprocessing.image.save_img(output_image_filename, enhanced_image, scale=False)
             print(INFO("Image Enhancement stage output saved to {:s}.".format(output_image_filename)))
 
             ######### Step 2: Face detection
             print(INFO("Running Face Detection stage...", prefix='\n'))
-            faces = face_detector(output_image)
+            faces_with_affines = face_detector(enhanced_image)
+            enhanced_faces = []
 
-            for face_id, face in enumerate(faces):
+            for face_id, (face_image, _, _) in enumerate(faces_with_affines):
                 # Save stage 2 output to file
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
                 output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
-                tf.keras.preprocessing.image.save_img(output_image_filename, face, scale=False)
+                tf.keras.preprocessing.image.save_img(output_image_filename, face_image, scale=False)
                 print(INFO("Face detection stage output saved to {:s}.".format(output_image_filename)))
 
                 ########## Step 3: Face enhancement
                 print(INFO("Running Face Enhancement stage...", prefix='\n'))
-                degraded_image = input_scale_transform((face.astype(np.float32) / 255.), opts.test_mode.lower(), settings.LOAD_SIZE)
+                degraded_image = input_scale_transform((face_image.astype(np.float32) / 255.), opts.test_mode.lower(), settings.LOAD_SIZE)
                 degraded_image = tf.expand_dims(tf.convert_to_tensor(input_normalize_transform(degraded_image)), axis=0)
                 seg = tf.zeros([1, settings.LOAD_SIZE, settings.LOAD_SIZE, opts.label_nc], dtype=degraded_image.dtype)
-                #print("HERE")
-                #print(degraded_image.shape)
-                #print(seg.shape)
-                output_image = face_enhancer([seg, degraded_image])
-                output_image = np.squeeze(rescale_model_image_output_for_opencv(output_image.numpy()), axis=0)
+                enhanced_face = face_enhancer([seg, degraded_image])
+                enhanced_face = np.squeeze(rescale_model_image_output_for_opencv(enhanced_face.numpy()), axis=0)
+                enhanced_faces.append(enhanced_face)
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_ENHANCEMENT_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
                 output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
-                tf.keras.preprocessing.image.save_img(output_image_filename, output_image, scale=False)
+                tf.keras.preprocessing.image.save_img(output_image_filename, enhanced_face, scale=False)
+                print(INFO("Face enhancement stage outputs saved to {:s}.".format(output_image_filename)))
 
-                ########## Step 4: Blending face back
+            ########## Step 4: Blending face back and histogram color matching
+            print(INFO("Running blending stage...", prefix='\n'))
+            blended_image = face_blender(enhanced_image, faces_with_affines, enhanced_faces)
+            output_image_dir = os.path.join(opts.output_folder, settings.BLENDING_SUBDIR)
+            os.makedirs(output_image_dir, exist_ok=True)
+            output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
+            tf.keras.preprocessing.image.save_img(output_image_filename, blended_image, scale=False)
+            print(INFO("Blending stage output saved to {:s}.".format(output_image_filename)))
 
 
 

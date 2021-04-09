@@ -11,11 +11,14 @@ import settings
 # NOTE: This class is just a wrapper around 'detect_all_dlib.py' which uses dlib library to
 #       to find faces and return them for the next step of face enhancement.
 class FaceDetector:
-    def _standard_face_pts(self):
-        return  np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4], np.float32) / 256.0 - 1.0  # NOTE: In range [-1.0, 1.0]
+    @staticmethod
+    def standard_face_pts():
+        return  np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4],
+                         np.float32) / 256.0 - 1.0  # NOTE: In range [-1.0, 1.0]
 
-    def _compute_transformation_matrix(self, img, face_landmarks, normalize:bool, target_face_scale:float):
-        std_face_pts = self._standard_face_pts()
+    @staticmethod
+    def compute_transformation_matrix(img, face_landmarks, normalize:bool, target_face_scale:float):
+        std_face_pts = FaceDetector.standard_face_pts()
         target_face_pts = ((std_face_pts * target_face_scale + 1.0) / 2.0 * settings.LOAD_SIZE).reshape((5, 2)).astype(np.float32)
 
         h, w, c = img.shape
@@ -24,22 +27,26 @@ class FaceDetector:
             face_landmarks[:, 0] = face_landmarks[:, 0] / h * 2.0 - 1.0
             face_landmarks[:, 1] = face_landmarks[:, 1] / w * 2.0 - 1.0
 
-        return cv.estimateAffinePartial2D(face_landmarks, target_face_pts)[0]
+        # (affine matrix, inverse affine matrix)
+        return cv.estimateAffinePartial2D(face_landmarks, target_face_pts)[0],\
+               cv.estimateAffinePartial2D(target_face_pts, face_landmarks)[0]
 
-    def _get_landmark(self, face_landmarks, id):
+    @staticmethod
+    def get_landmark(face_landmarks, id):
         part = face_landmarks.part(id)
         return (part.x, part.y)
 
-    def _search(self, face_landmarks):
-        x1, y1 = self._get_landmark(face_landmarks, 36)
-        x2, y2 = self._get_landmark(face_landmarks, 39)
-        x3, y3 = self._get_landmark(face_landmarks, 42)
-        x4, y4 = self._get_landmark(face_landmarks, 45)
+    @staticmethod
+    def search(face_landmarks):
+        x1, y1 = FaceDetector.get_landmark(face_landmarks, 36)
+        x2, y2 = FaceDetector.get_landmark(face_landmarks, 39)
+        x3, y3 = FaceDetector.get_landmark(face_landmarks, 42)
+        x4, y4 = FaceDetector.get_landmark(face_landmarks, 45)
 
-        x_nose, y_nose = self._get_landmark(face_landmarks, 30)
+        x_nose, y_nose = FaceDetector.get_landmark(face_landmarks, 30)
 
-        x_left_mouth, y_left_mouth = self._get_landmark(face_landmarks, 48)
-        x_right_mouth, y_right_mouth = self._get_landmark(face_landmarks, 54)
+        x_left_mouth, y_left_mouth = FaceDetector.get_landmark(face_landmarks, 48)
+        x_right_mouth, y_right_mouth = FaceDetector.get_landmark(face_landmarks, 54)
 
         x_left_eye = (x1 + x2) // 2
         y_left_eye = (y1 + y2) // 2
@@ -74,11 +81,16 @@ class FaceDetector:
         faces = self.face_detector(img)
         print(INFO("Detected {:d} faces.".format(len(faces))))
 
-        aligned_faces = []
+        aligned_faces_with_affine = []
         for face in faces:
-            face_landmarks = self._search(self.landmark_locator(img, face))
+            face_landmarks = FaceDetector.search(self.landmark_locator(img, face))
 
-            landmarks_affine = self._compute_transformation_matrix(img, face_landmarks, False, target_face_scale=self.target_face_scale)
-            aligned_faces.append(cv.warpAffine(img, landmarks_affine, self.output_shape))
-
-        return aligned_faces
+            landmarks_affine,\
+            inverse_landmarks_affine = FaceDetector.compute_transformation_matrix(img,
+                                                                                  face_landmarks,
+                                                                                  normalize=False,
+                                                                                  target_face_scale=self.target_face_scale)
+            aligned_faces_with_affine.append([cv.warpAffine(img, landmarks_affine, self.output_shape),
+                                              landmarks_affine,
+                                              inverse_landmarks_affine])
+        return aligned_faces_with_affine

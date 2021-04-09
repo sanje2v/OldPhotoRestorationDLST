@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, Lambda, UpSampling2D, LeakyReLU, ZeroPadding2D
+from tensorflow.keras.layers import Conv2D, Lambda, UpSampling2D, LeakyReLU
 from tensorflow.keras.activations import tanh
 
 from .layers import SPADEResnetBlock
@@ -83,9 +83,6 @@ class FaceEnhancer(tf.keras.Model):
 
         seg, degraded_image = inputs
 
-        #####REMOVE
-        #degraded_image = tf.ones_like(degraded_image)
-
         if len(seg.shape) != 4:
             seg = tf.expand_dims(seg, axis=0)
 
@@ -94,17 +91,7 @@ class FaceEnhancer(tf.keras.Model):
 
         x = iterative_call(self.inner_layers[0], degraded_image, training=training)
 
-        #####REMOVE
-        #print()
-        #k = tf.keras.layers.Flatten()(x)[0][0:20]
-        #print(x.shape)
-        #print(k)
-
         for i in range(1, len(self.inner_layers) - 1):
             x = iterative_call(self.inner_layers[i], [x, seg, degraded_image], training=training)
-
-            #k = tf.keras.layers.Flatten()(x)[0][0:20]
-            #print(x.shape)
-            #print(k)
 
         return iterative_call(self.inner_layers[-1], x, training=training)

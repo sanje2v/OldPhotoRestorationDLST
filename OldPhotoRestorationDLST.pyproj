@@ -35,6 +35,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="main.py" />
+    <Compile Include="models\FaceBlender.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\FaceDetector.py">
       <SubType>Code</SubType>
     </Compile>

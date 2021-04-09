@@ -1,7 +1,6 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 from tensorflow_addons.layers import SpectralNormalization
-from tensorflow.keras.layers import Conv2D, Lambda, LeakyReLU, BatchNormalization, ZeroPadding2D
+from tensorflow.keras.layers import Conv2D, Lambda, LeakyReLU, BatchNormalization
 from tensorflow.keras.layers.experimental import SyncBatchNormalization
 
 from . import SPADE
