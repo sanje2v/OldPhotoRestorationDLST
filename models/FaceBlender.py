@@ -96,18 +96,15 @@ class FaceBlender:
 
     @staticmethod
     def blur_blending(im1, im2, mask):
-        mask *= 255.0
+        assert im1.shape == im2.shape == mask.shape
+        mask = mask.astype(np.float32) * 255.0
         kernel = np.ones((9, 9), dtype=np.uint8)
         mask = cv.erode(mask, kernel, iterations=3)
         mask_blur = cv.GaussianBlur(mask, (25, 25), 0)
         mask_blur /= 255.0
 
-        im = im1 * mask_blur + (1 - mask_blur) * im2
-
-        im /= 255.0
-        im = np.clip(im, 0.0, 1.0)
-
-        return im * 255.
+        im = im1.astype(np.float32) * mask_blur + (1 - mask_blur) * im2.astype(np.float32)
+        return np.clip(im, 0., 255.).astype(np.uint8)
 
 
     def __call__(self, image, faces_with_affines, enhanced_faces):
@@ -115,27 +112,15 @@ class FaceBlender:
 
         for face_id, (face_image, landmarks_affine, inverse_landmarks_affine) in enumerate(faces_with_affines):
             # Histogram color matching between enhanced image and enchanced face image
-            A = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+            A = cv.cvtColor(face_image, cv.COLOR_RGB2BGR)
             B = cv.cvtColor(enhanced_faces[face_id], cv.COLOR_RGB2BGR)
-            B = FaceBlender.match_histograms(B, A)
-            enhanced_face = cv.cvtColor(B, cv.COLOR_BGR2RGB)
+            enhanced_face = cv.cvtColor(FaceBlender.match_histograms(B, A), cv.COLOR_BGR2RGB)
 
             # Create mask on where to blend 'enhanced_face' in 'image'
-            mask = cv.warpAffine(np.ones_like(image, dtype=np.uint8), inverse_landmarks_affine, face_image.shape[0:2])
+            warped_back = cv.warpAffine(enhanced_face, inverse_landmarks_affine, (image.shape[1], image.shape[0]))
+            backward_mask = cv.warpAffine(np.ones_like(enhanced_face, dtype=np.uint8), inverse_landmarks_affine, (image.shape[1], image.shape[0]))
 
-            image = FaceBlender.blur_blending(enhanced_face, image, mask.astype(np.float32))
-
-            #backward_mask = cv.warpAffine(np.ones_like(image, dtype=np.uint8), landmarks_affine, face_image.shape[0:2])
-
-            ## Histogram color matching
-            #A = cv.cvtColor(face_image, cv.COLOR_RGB2BGR)
-            #B = cv.cvtColor(enhanced_faces[face_id], cv.COLOR_RGB2BGR)
-            #B = FaceBlender.match_histograms(B, A)
-            #enhanced_face = cv.cvtColor(B, cv.COLOR_BGR2RGB)
-
-            #enhanced_face = cv.warpAffine(enhanced_face, inverse_landmarks_affine, image.shape[0:2])
-            #backward_mask = cv.warpAffine(backward_mask, inverse_landmarks_affine, image.shape[0:2])
-
-            #image = FaceBlender.blur_blending(enhanced_face, image, backward_mask)
+            # Blend enhanced face into enhanced image using mask
+            image = FaceBlender.blur_blending(warped_back, image, backward_mask)
 
         return image

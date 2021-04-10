@@ -28,8 +28,9 @@ class FaceDetector:
             face_landmarks[:, 1] = face_landmarks[:, 1] / w * 2.0 - 1.0
 
         # (affine matrix, inverse affine matrix)
-        return cv.estimateAffinePartial2D(face_landmarks, target_face_pts)[0],\
-               cv.estimateAffinePartial2D(target_face_pts, face_landmarks)[0]
+        affine_matrix = cv.estimateAffinePartial2D(face_landmarks, target_face_pts)[0]
+        inverse_affine_matrix = cv.invertAffineTransform(affine_matrix)
+        return affine_matrix, inverse_affine_matrix
 
     @staticmethod
     def get_landmark(face_landmarks, id):
