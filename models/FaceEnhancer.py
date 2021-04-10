@@ -71,7 +71,7 @@ class FaceEnhancer(tf.keras.Model):
             final_nc = opts.ngf
 
         netG.append([LeakyReLU(alpha=2e-1),
-                     Conv2D(3, kernel_size=3, padding='valid', name='conv_img'),
+                     Conv2D(3, kernel_size=3, padding='same', name='conv_img'),
                      Lambda(lambda x: tanh(x), trainable=False)])
 
         self.inner_layers = netG

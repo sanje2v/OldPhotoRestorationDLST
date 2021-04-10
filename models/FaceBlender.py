@@ -114,8 +114,8 @@ class FaceBlender:
         assert len(faces_with_affines) == len(enhanced_faces)
 
         for face_id, (face_image, landmarks_affine, inverse_landmarks_affine) in enumerate(faces_with_affines):
-            # Histogram color matching
-            A = cv.cvtColor(face_image, cv.COLOR_RGB2BGR)
+            # Histogram color matching between enhanced image and enchanced face image
+            A = cv.cvtColor(image, cv.COLOR_RGB2BGR)
             B = cv.cvtColor(enhanced_faces[face_id], cv.COLOR_RGB2BGR)
             B = FaceBlender.match_histograms(B, A)
             enhanced_face = cv.cvtColor(B, cv.COLOR_BGR2RGB)

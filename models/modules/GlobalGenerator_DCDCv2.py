@@ -10,7 +10,7 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         encoder =\
         [
             ReflectionPadding2D(padding=3),
-            Conv2D(filters=min(self.ngf, self.opts.mc), kernel_size=7, padding='valid'),
+            Conv2D(min(self.ngf, self.opts.mc), kernel_size=7, padding='valid'),
             self.norm_layer(),
             self.activation_layer()
         ]
@@ -18,20 +18,20 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         for i in range(self.opts.start_r):
             mult = 2**i
 
-            encoder.extend([Conv2D(filters=min(self.ngf * mult * 2, self.opts.mc),
+            encoder.extend([Conv2D(min(self.ngf * mult * 2, self.opts.mc),
                                    kernel_size=self.k_size,
                                    strides=2,
-                                   padding='valid'),
+                                   padding='same'),
                             self.norm_layer(),
                             self.activation_layer()])
 
         for i in range(self.opts.start_r, self.n_downsampling - 1):
             mult = 2**i
 
-            encoder.extend([Conv2D(filters=min(self.ngf * mult * 2, self.opts.mc),
+            encoder.extend([Conv2D(min(self.ngf * mult * 2, self.opts.mc),
                                    kernel_size=self.k_size,
                                    strides=2,
-                                   padding='valid'),
+                                   padding='same'),
                             self.norm_layer(),
                             self.activation_layer(),
                             ResnetBlock(min(self.ngf * mult * 2, self.opts.mc),
@@ -46,10 +46,10 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         mult = 2**(self.n_downsampling - 1)
 
         if self.opts.spatio_size == 32:
-            encoder.extend([Conv2D(filters=min(self.ngf * mult * 2, self.opts.mc),
+            encoder.extend([Conv2D(min(self.ngf * mult * 2, self.opts.mc),
                                    kernel_size=self.k_size,
                                    strides=2,
-                                   padding='valid'),
+                                   padding='same'),
                             self.norm_layer(),
                             self.activation_layer()])
 
@@ -65,7 +65,7 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
                                    activation_layer=self.activation_layer))
 
         if self.opts.feat_dim > 0:
-            encoder.append(Conv2D(filters=self.opts.feat_dim, kernel_size=1))
+            encoder.append(Conv2D(self.opts.feat_dim, kernel_size=1, padding='valid'))
 
         return tf.keras.Sequential(encoder, name=name)
 
@@ -75,9 +75,10 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         mult = 2**(self.n_downsampling - 1)
 
         if self.opts.feat_dim > 0:
-            decoder.append(Conv2D(filters=min(self.ngf * mult * 2, self.opts.mc), kernel_size=1, padding='valid'))
+            decoder.append(Conv2D(min(self.ngf * mult * 2, self.opts.mc), kernel_size=1, padding='valid'))
 
-        o_pad = 0 if self.k_size == 4 else 1
+        # CAUTION: 'o_pad' below must be None and NOT 0 when no output padding is required. Might be a TF bug.
+        o_pad = None if self.k_size == 4 else 1
         mult = 2**self.n_downsampling
 
         decoder.append(ResnetBlock(min(self.ngf * mult, self.opts.mc),
@@ -86,10 +87,10 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
                                    activation_layer=self.activation_layer))
 
         if self.opts.spatio_size == 32:
-            decoder.extend([Conv2DTranspose(filters=min((self.ngf * mult) // 2, self.opts.mc),
+            decoder.extend([Conv2DTranspose(min((self.ngf * mult) // 2, self.opts.mc),
                                             kernel_size=self.k_size,
                                             strides=2,
-                                            padding='valid',
+                                            padding='same',
                                             output_padding=o_pad),
                             self.norm_layer(),
                             self.activation_layer()])
@@ -114,7 +115,7 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
                             Conv2DTranspose(min((self.ngf * mult) // 2, self.opts.mc),
                                             kernel_size=self.k_size,
                                             strides=2,
-                                            padding='valid',
+                                            padding='same',
                                             output_padding=o_pad),
                             self.norm_layer(),
                             self.activation_layer()])
@@ -122,19 +123,19 @@ class GlobalGenerator_DCDCv2(tf.keras.layers.Layer):
         for i in range(self.n_downsampling - self.opts.start_r, self.n_downsampling):
             mult = 2**(self.n_downsampling - i)
 
-            decoder.extend([Conv2DTranspose(filters=min((self.ngf * mult) // 2, self.opts.mc),
-                                        kernel_size=self.k_size,
-                                        strides=2,
-                                        padding='valid',
-                                        output_padding=o_pad),
+            decoder.extend([Conv2DTranspose(min((self.ngf * mult) // 2, self.opts.mc),
+                                            kernel_size=self.k_size,
+                                            strides=2,
+                                            padding='same',
+                                            output_padding=o_pad),
                             self.norm_layer(),
                             self.activation_layer()])
 
         decoder.extend([ReflectionPadding2D(padding=3),
-                        Conv2D(filters=self.output_nc, kernel_size=7, padding='valid')])
+                        Conv2D(self.output_nc, kernel_size=7, padding='valid')])
 
         if not self.opts.use_segmentation_model:
-            decoder.append(Lambda(lambda x: tanh(x)))
+            decoder.append(Lambda(lambda x: tanh(x), trainable=False))
 
         return tf.keras.Sequential(decoder, name=name)
 

@@ -19,7 +19,7 @@ NOTE: Images shown below have been taken from [The United States Library of Cong
 TODO
 
 # To improve
-The output images have a drop shadow-like effect around their edges. Have yet to investigate the source of this problem. Inconsistent padding could causing this.
+Trainable model.
 
 
 # Requirements

@@ -79,7 +79,6 @@ class FaceDetector:
         assert img.shape[-1] == consts.NUM_RGB_CHANNELS, "The last channel must have {:d} dimensions for a RGB image array.".format(consts.NUM_RGB_CHANNELS)
 
         faces = self.face_detector(img)
-        print(INFO("Detected {:d} faces.".format(len(faces))))
 
         aligned_faces_with_affine = []
         for face in faces:

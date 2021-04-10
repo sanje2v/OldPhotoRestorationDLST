@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, ZeroPadding2D, Dropout
+from tensorflow.keras.layers import Conv2D, Dropout
 
 from . import ReflectionPadding2D, ReplicationPadding2D
 
@@ -26,7 +26,6 @@ class ResnetBlock(tf.keras.layers.Layer):
             self.conv_block.add(ReplicationPadding2D(self.dilation))
         elif self.padding_type == 'zero':
             padding = 'same'
-            self.conv_block.add(ZeroPadding2D(padding=self.dilation))
 
         self.conv_block.add(Conv2D(self.dim, kernel_size=3, padding=padding, dilation_rate=self.dilation))
         self.conv_block.add(self.norm_layer())
@@ -43,9 +42,8 @@ class ResnetBlock(tf.keras.layers.Layer):
             self.conv_block.add(ReplicationPadding2D(padding=1))
         elif self.padding_type == 'zero':
             padding = 'same'
-            self.conv_block.add(ZeroPadding2D(padding=1))
 
-        self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding='valid'))
+        self.conv_block.add(Conv2D(filters=self.dim, kernel_size=3, padding=padding))
         self.conv_block.add(self.norm_layer())
 
     def call(self, inputs):

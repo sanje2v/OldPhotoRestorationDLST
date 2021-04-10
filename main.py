@@ -78,6 +78,7 @@ def main(args):
             ######### Step 2: Face detection
             print(INFO("Running Face Detection stage...", prefix='\n'))
             faces_with_affines = face_detector(enhanced_image)
+            print(INFO("Found {:d} face(s).".format(len(faces_with_affines))))
             enhanced_faces = []
 
             for face_id, (face_image, _, _) in enumerate(faces_with_affines):
@@ -103,13 +104,14 @@ def main(args):
                 print(INFO("Face enhancement stage outputs saved to {:s}.".format(output_image_filename)))
 
             ########## Step 4: Blending face back and histogram color matching
-            print(INFO("Running blending stage...", prefix='\n'))
-            blended_image = face_blender(enhanced_image, faces_with_affines, enhanced_faces)
-            output_image_dir = os.path.join(opts.output_folder, settings.BLENDING_SUBDIR)
-            os.makedirs(output_image_dir, exist_ok=True)
-            output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
-            tf.keras.preprocessing.image.save_img(output_image_filename, blended_image, scale=False)
-            print(INFO("Blending stage output saved to {:s}.".format(output_image_filename)))
+            if len(faces_with_affines) > 0:
+                print(INFO("Running blending stage...", prefix='\n'))
+                blended_image = face_blender(enhanced_image, faces_with_affines, enhanced_faces)
+                output_image_dir = os.path.join(opts.output_folder, settings.BLENDING_SUBDIR)
+                os.makedirs(output_image_dir, exist_ok=True)
+                output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
+                tf.keras.preprocessing.image.save_img(output_image_filename, blended_image, scale=False)
+                print(INFO("Blending stage output saved to {:s}.".format(output_image_filename)))
 
 
 
