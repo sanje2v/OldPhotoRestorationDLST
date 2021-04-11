@@ -2,7 +2,7 @@
 This is a TensorFlow v2+Keras inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos.
 
 The whole process consists of the following steps:
-* Stage 1 - Image enchancement
+* Stage 1 - Image enhancement
     1. Quality restoration OR
     2. Quality restoration with scratch mask
 * Stage 2 - Face detection
@@ -17,9 +17,6 @@ Official PyTorch implementation can be found [here](https://github.com/microsoft
 NOTE: Images shown below have been taken from [The United States Library of Congress](https://www.loc.gov/free-to-use/)'s 'free to use and reuse' photo archives.
 
 TODO
-
-# To improve
-Trainable model.
 
 
 # Requirements

@@ -81,7 +81,7 @@ class FaceDetector:
 
         faces = self.face_detector(img)
 
-        aligned_faces_with_affine = []
+        aligned_faces_with_affines = []
         for face in faces:
             face_landmarks = FaceDetector.search(self.landmark_locator(img, face))
 
@@ -90,7 +90,7 @@ class FaceDetector:
                                                                                   face_landmarks,
                                                                                   normalize=False,
                                                                                   target_face_scale=self.target_face_scale)
-            aligned_faces_with_affine.append([cv.warpAffine(img, landmarks_affine, self.output_shape),
+            aligned_faces_with_affines.append([cv.warpAffine(img, landmarks_affine, self.output_shape),
                                               landmarks_affine,
                                               inverse_landmarks_affine])
-        return aligned_faces_with_affine
+        return aligned_faces_with_affines
