@@ -26,23 +26,25 @@ class ImageEnhancer(tf.keras.Model):
                                              opts.n_downsample_global,
                                              norm_layer=opts.norm,
                                              name='netG_B')
-
-        mapping_module_class = MappingModuleWithMask if opts.non_local == 'Settings_42' else MappingModule
-        self.mapping_net = mapping_module_class(opts,
-                                                min(opts.ngf * 2**opts.n_downsample_global, opts.mc),
-                                                opts.map_mc,
-                                                opts.mapping_n_block,
-                                                norm_layer=opts.norm,
-                                                name='mapping_net')
+        self.mapping_net = MappingModule(opts,
+                                         opts.with_scratch,
+                                         min(opts.ngf * 2**opts.n_downsample_global, opts.mc),
+                                         opts.map_mc,
+                                         opts.mapping_n_block,
+                                         norm_layer=opts.norm,
+                                         name='mapping_net')
 
     def call(self, inputs, training=False):
         if training:
             raise NotImplementedError("Training '{:s}' instance is NOT supported yet.".format(self.__class__.name))
 
-        input_concat, _ = inputs
+        input_concat, mask = inputs
         if len(input_concat.shape) != 4:
             input_concat = tf.expand_dims(input_concat, axis=0)
 
+        if mask is not None and len(mask.shape) != 4:
+            mask = tf.expand_dims(mask, axis=0)
+
         label_feature = self.netG_A(input_concat, training=training)
-        label_feature_map = self.mapping_net(label_feature, training=training)
+        label_feature_map = self.mapping_net([label_feature, mask], training=training)
         return self.netG_B(label_feature_map, training=training)

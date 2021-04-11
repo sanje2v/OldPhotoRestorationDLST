@@ -57,25 +57,29 @@ num_upsampling_layers = 'normal'
 crop_size = 256
 injection_layer = 'all'
 preprocess_mode = 'resize'
+softmax_temperature = 1.0
+use_self = False
+cosin_similarity = False
 
-if Quality_restore:
-    name = 'mapping_quality'
-    NL_res = False
-    use_SN = False
-    correlation_renormalize = False
-    NL_use_mask = False
-    NL_fusion_method = 'add'
-    non_local = ''                      # Which non_local setting
-    load_pretrainA = os.path.join(checkpoints_dir, "VAE_A_quality")
-    load_pretrainB = os.path.join(checkpoints_dir, "VAE_B_quality")
 
-if Scratch_and_Quality_restore:
-    name = 'mappint-scratch'
-    NL_res = True
-    use_SN = True
-    correlation_renormalize = True
-    NL_use_mask = True
-    NL_fusion_method = 'combine'
-    non_local = 'Setting_42'
-    load_pretrainA = os.path.join(checkpoints_dir, "VAE_A_quality")
-    load_pretrainB = os.path.join(checkpoints_dir, "VAE_B_scratch")
+#if Quality_restore:
+#    name = 'mapping_quality'
+#    NL_res = False
+#    use_SN = False
+#    correlation_renormalize = False
+#    NL_use_mask = False
+#    NL_fusion_method = 'add'
+#    non_local = ''                      # Which non_local setting
+#    load_pretrainA = os.path.join(checkpoints_dir, "VAE_A_quality")
+#    load_pretrainB = os.path.join(checkpoints_dir, "VAE_B_quality")
+
+#if Scratch_and_Quality_restore:
+name = 'mappint-scratch'
+NL_res = True
+use_SN = True
+correlation_renormalize = True
+NL_use_mask = True
+NL_fusion_method = 'combine'
+non_local = 'Setting_42'
+load_pretrainA = os.path.join(checkpoints_dir, "VAE_A_quality")
+load_pretrainB = os.path.join(checkpoints_dir, "VAE_B_scratch")

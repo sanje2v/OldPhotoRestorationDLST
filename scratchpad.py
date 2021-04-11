@@ -6,16 +6,23 @@ import tensorflow as tf
 
 import consts
 
+
+from models.modules import NonLocalBlock2D_with_mask_Res
+
 with tf.device("/CPU"):
-    face_enhancer = FaceEnhancer(opts)
+    test = NonLocalBlock2D_with_mask_Res(512, 512, 'combine', True, 1.0, False, False)
+    y = test([tf.zeros((1, 152, 232, 512)), tf.ones((1, 608, 928, 1))], training=False)
 
-    # Load model weights
-    face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                   np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-    face_enhancer.load_weights(os.path.abspath('./weights/Face_Enhancement/tf_keras/out.weights')).assert_consumed()
 
-    face_enhancer([np.zeros((1, 256, 256, 18), dtype=np.float32),
-                   np.ones((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+#    face_enhancer = FaceEnhancer(opts)
+
+#    # Load model weights
+#    face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+#                   np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+#    face_enhancer.load_weights(os.path.abspath('./weights/Face_Enhancement/tf_keras/out.weights')).assert_consumed()
+
+#    face_enhancer([np.zeros((1, 256, 256, 18), dtype=np.float32),
+#                   np.ones((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
 
 # class A(tf.keras.layers.Layer):
     # def __init__(self, *args, **kwargs):

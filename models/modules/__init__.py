@@ -1,3 +1,3 @@
 from .MappingModule import MappingModule
-from .MappingModuleWithMask import MappingModuleWithMask
+from .NonLocalBlock2D_with_mask_Res import NonLocalBlock2D_with_mask_Res
 from .GlobalGenerator_DCDCv2 import GlobalGenerator_DCDCv2

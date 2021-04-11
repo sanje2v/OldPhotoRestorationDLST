@@ -27,7 +27,7 @@ def main(args):
             # Create the model instance and run it eagerly so that all its layers are constructed
             model = ImageEnhancer(opts)
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                   np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+                   np.empty((1, 256, 256, 1), dtype=np.float32)])
 
             # CAUTION: This code assumes that PyTorch saves weights in the order of layers
             for layer in model.layers:
@@ -35,7 +35,7 @@ def main(args):
 
                 inner_layer_list = list(filter(lambda x: x.startswith(layer.inner_layers.name), input_weights.keys()))
                 inner_layer_index = 0
-                conv2d_variables = [x for x in layer.inner_layers.weights if x.name.startswith('conv2d')]
+                conv2d_variables = [x for x in layer.variables if 'conv2d' in x.name]
 
                 for i, variable in enumerate(conv2d_variables):
                     if 'kernel' in variable.name:
@@ -126,6 +126,7 @@ if __name__ == '__main__':
         parser.add_argument('--input_weights', required=True, nargs='+', action=ValidateLayerNamesAndWeightsFile, help="Layer names followed by weights files to load and convert")
         parser.add_argument('--output_weights', required=True, type=lambda x: os.path.abspath(x), help="Tensorflow + Keras weights file")
         parser.add_argument('--stage', type=int, required=True, choices=[1, 3], help="Stage 1: Image enhancement, Stage 3: Face enhancement")
+        parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")
         args = parser.parse_args()
 
         main(args)
