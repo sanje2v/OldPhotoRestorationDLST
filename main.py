@@ -50,9 +50,9 @@ def main(args):
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
         if opts.with_scratch:
             scratch_detector(np.empty((1, 256, 256, 1), dtype=np.float32))
-        #image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-        #                np.empty((1, 256, 256, 18), dtype=np.float32)])
-        #image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
+        image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+                        np.empty((1, 256, 256, 18), dtype=np.float32)])
+        image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
 
         face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                        np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
@@ -109,7 +109,7 @@ def main(args):
 
                 ########## Step 3: Face enhancement
                 print(INFO("Running Face Enhancement stage...", prefix='\n'))
-                degraded_image = input_scale_transform((face_image.astype(np.float32) / 255.), opts.test_mode.lower(), settings.LOAD_SIZE)
+                degraded_image = input_scale_transform((face_image.astype(np.float32) / 255.), opts.test_mode.lower(), settings.LOAD_SIZE, 4)
                 degraded_image = tf.expand_dims(tf.convert_to_tensor(input_normalize_transform(degraded_image)), axis=0)
                 seg = tf.zeros([1, settings.LOAD_SIZE, settings.LOAD_SIZE, opts.label_nc], dtype=degraded_image.dtype)
                 enhanced_face = face_enhancer([seg, degraded_image])
