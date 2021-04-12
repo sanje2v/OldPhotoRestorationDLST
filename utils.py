@@ -5,6 +5,8 @@ import termcolor
 import tensorflow as tf
 import numpy as np
 
+import consts
+
 
 def INFO(text, prefix=''):
     return termcolor.colored(prefix + "INFO: {:}".format(text), 'green')
@@ -27,6 +29,12 @@ def getFilesWithExtension(dir, extension_or_tuple, with_path=False):
     extension_or_tuple = tuple(x.casefold() for x in extension_or_tuple)
     return [(os.path.join(dir, f) if with_path else f) for f in os.listdir(dir) if f.casefold().endswith(extension_or_tuple)]
 
+def replaceExtension(filename, ext):
+    if not ext.startswith('.'):
+        ext = '.' + ext
+    basename, _ = os.path.splitext(filename)
+    return (basename + ext)
+
 class ValidateLayerNamesAndWeightsFile(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if len(values) % 2 != 0:
@@ -42,7 +50,7 @@ class ValidateLayerNamesAndWeightsFile(argparse.Action):
         setattr(namespace, self.dest, input_weights_dict)
 
 
-def input_scale_transform(input_image, test_mode, load_size):
+def input_scale_transform(input_image, test_mode, load_size, factor_of):
     h, w = input_image.shape[0:2]
 
     if test_mode == 'scale':
@@ -54,13 +62,16 @@ def input_scale_transform(input_image, test_mode, load_size):
             w = (w * load_size) // input_image.shape[0]
 
     if test_mode in ['scale', 'full']:
-        if any([x % 4 != 0 for x in (h, w)]):
-            h = int(round(h / 4) * 4)
-            w = int(round(w / 4) * 4)
+        if any([x % factor_of != 0 for x in (h, w)]):
+            h = int(round(h / factor_of) * factor_of)
+            w = int(round(w / factor_of) * factor_of)
             input_image = tf.image.resize(input_image, (h, w), tf.image.ResizeMethod.BILINEAR)
     else:
         input_image = tf.image.resize_with_crop_or_pad(input_image, load_size, load_size)
     return input_image
+
+def input_grayscale_transform(input_image):
+    return np.expand_dims(np.dot(input_image[...,:consts.NUM_RGB_CHANNELS], [0.299, 0.587, 0.114]), axis=-1)
 
 def input_normalize_transform(input_image):
     return (input_image - 0.5) / 0.5

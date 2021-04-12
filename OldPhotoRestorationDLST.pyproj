@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>447eba48-c4ad-4c91-ad3f-0ac95bf54f0e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>convert_weights_for_tf.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -13,7 +13,7 @@
     <RootNamespace>OldPhotoRestorationDLST</RootNamespace>
     <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>--with_scratch --input_weights netG_A ./weights/Photo_Enhancement/restoration/VAE_A_quality/latest_net_G.pth netG_B ./weights/Photo_Enhancement/restoration/VAE_B_quality/latest_net_G.pth mapping_net ./weights/Photo_Enhancement/restoration/mapping_scratch/latest_net_mapping_net.pth --stage 1 --output_weights ./weights/Photo_Enhancement/tf_keras_scratch/out.weights</CommandLineArguments>
+    <CommandLineArguments>--input_folder C:\Users\Sanjeev\Desktop\Bringing-Old-Photos-Back-to-Life\imgs\totest\specific --checkpoint ./weights/Photo_Enhancement/tf_keras/out.weights ./weights/Face_Enhancement/tf_keras/out.weights --with_scratch</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
     <InterpreterArguments>
@@ -44,11 +44,20 @@
     <Compile Include="models\FaceEnhancer.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="models\layers\BlurPool2D.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\layers\ReplicationPadding2D.py" />
     <Compile Include="models\layers\SPADE.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\layers\SPADEResnetBlock.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\UNetConvBlock.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\layers\UNetUpBlock.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\modules\GlobalGenerator_DCDCv2.py">
@@ -67,6 +76,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\modules\NonLocalBlock2D_with_mask_Res.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\modules\UNet.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="models\modules\__init__.py">

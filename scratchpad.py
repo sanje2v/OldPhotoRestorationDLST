@@ -3,15 +3,22 @@ from models import FaceEnhancer
 import test_options as opts
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.layers import Conv2D, BatchNormalization, LeakyReLU
+from pprint import pprint
 
 import consts
 
-
+from models import ScratchDetector
 from models.modules import NonLocalBlock2D_with_mask_Res
 
 with tf.device("/CPU"):
-    test = NonLocalBlock2D_with_mask_Res(512, 512, 'combine', True, 1.0, False, False)
-    y = test([tf.zeros((1, 152, 232, 512)), tf.ones((1, 608, 928, 1))], training=False)
+    scratch_detector = ScratchDetector()
+    a = scratch_detector(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
+    print(a.shape)
+    pprint([x.name for x in scratch_detector.variables])
+
+    #test = NonLocalBlock2D_with_mask_Res(512, 512, 'combine', True, 1.0, False, False)
+    #y = test([tf.zeros((1, 152, 232, 512)), tf.ones((1, 608, 928, 1))], training=False)
 
 
 #    face_enhancer = FaceEnhancer(opts)

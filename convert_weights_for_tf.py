@@ -32,6 +32,8 @@ def main(args):
             # CAUTION: This code assumes that PyTorch saves weights in the order of layers
             for layer in model.layers:
                 input_weights = opts.input_weights[layer.name]
+                if 'state_dict' in input_weights:
+                    input_weights = input_weights['state_dict']
 
                 inner_layer_list = list(filter(lambda x: x.startswith(layer.inner_layers.name), input_weights.keys()))
                 inner_layer_index = 0

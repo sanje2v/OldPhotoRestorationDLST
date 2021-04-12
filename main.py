@@ -38,6 +38,8 @@ def main(args):
                                                       expand_animations=False))  # NOTE: Image tensor range is 0.0-1.0
 
         # Create image enhancement model for stages and load their weights
+        if opts.with_scratch:
+            scratch_detector = ScratchDetector()
         image_enhancer = ImageEnhancer(opts)
         face_detector = FaceDetector(os.path.join(settings.WEIGHTS_DIR, settings.FACE_DETECTION_SUBDIR, settings.FACE_DETECTION_WEIGHTS))
         opts.label_nc = 18
@@ -46,9 +48,11 @@ def main(args):
 
         # Load model weights
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
-        image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                        np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-        image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
+        if opts.with_scratch:
+            scratch_detector(np.empty((1, 256, 256, 1), dtype=np.float32))
+        #image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+        #                np.empty((1, 256, 256, 18), dtype=np.float32)])
+        #image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
 
         face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                        np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
@@ -56,22 +60,36 @@ def main(args):
 
         # Preprocess and then run each stage
         for i in range(len(input_images)):
-            if opts.NL_use_mask:
-                pass
-            else:
-                input_image = input_scale_transform(input_images[i], opts.test_mode.lower(), settings.LOAD_SIZE)
-                mask = None
-            input_image = input_normalize_transform(input_image)
+            default_output_image_filename = replaceExtension(os.path.basename(input_image_filenames[i]), 'png')
 
-            ######### Step 1: Image enhancement
+            ######### Step 1: Optional scratch detection and then Image enhancement
+            if opts.with_scratch:
+                print(INFO("Running Scratch Detection stage...", prefix='\n'))
+                input_image_size = input_images[i].shape[0:2]
+                input_image = input_scale_transform(input_images[i], 'scale', settings.LOAD_SIZE, 16)
+                input_image = input_grayscale_transform(input_image)
+                input_image = input_normalize_transform(input_image)
+                scratch_mask = scratch_detector(input_image)
+                scratch_mask = tf.image.resize(scratch_mask, size=input_image_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+                scratch_mask = np.squeeze(scratch_mask.numpy(), axis=0)
+
+                output_image_dir = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR)
+                os.makedirs(output_image_dir, exist_ok=True)
+                output_image_filename = os.path.join(output_image_dir, "scratchmask_" + default_output_image_filename)
+                tf.keras.preprocessing.image.save_img(output_image_filename, scratch_mask, scale=True)
+            else:
+                scratch_mask = None
+
             print(INFO("Running Image Enhancement stage...", prefix='\n'))
-            enhanced_image = image_enhancer([input_image, mask])
+            input_image = input_scale_transform(input_images[i], opts.test_mode.lower(), settings.LOAD_SIZE, 4)
+            input_image = input_normalize_transform(input_image)
+            enhanced_image = image_enhancer([input_image, scratch_mask])
             enhanced_image = np.squeeze(rescale_model_image_output_for_opencv(enhanced_image.numpy()), axis=0)
 
             # Save stage 1 output to file
             output_image_dir = os.path.join(opts.output_folder, settings.IMAGE_ENHANCEMENT_SUBDIR)
             os.makedirs(output_image_dir, exist_ok=True)
-            output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
+            output_image_filename = os.path.join(output_image_dir, default_output_image_filename)
             tf.keras.preprocessing.image.save_img(output_image_filename, enhanced_image, scale=False)
             print(INFO("Image Enhancement stage output saved to {:s}.".format(output_image_filename)))
 
@@ -85,7 +103,7 @@ def main(args):
                 # Save stage 2 output to file
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_DETECTION_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
-                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
+                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, default_output_image_filename))
                 tf.keras.preprocessing.image.save_img(output_image_filename, face_image, scale=False)
                 print(INFO("Face detection stage output saved to {:s}.".format(output_image_filename)))
 
@@ -99,7 +117,7 @@ def main(args):
                 enhanced_faces.append(enhanced_face)
                 output_image_dir = os.path.join(opts.output_folder, settings.FACE_ENHANCEMENT_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
-                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, os.path.basename(input_image_filenames[i])))
+                output_image_filename = os.path.join(output_image_dir, "{:d}_{:s}".format(face_id, default_output_image_filename))
                 tf.keras.preprocessing.image.save_img(output_image_filename, enhanced_face, scale=False)
                 print(INFO("Face enhancement stage outputs saved to {:s}.".format(output_image_filename)))
 
@@ -109,7 +127,7 @@ def main(args):
                 blended_image = face_blender(enhanced_image, faces_with_affines, enhanced_faces)
                 output_image_dir = os.path.join(opts.output_folder, settings.BLENDING_SUBDIR)
                 os.makedirs(output_image_dir, exist_ok=True)
-                output_image_filename = os.path.join(output_image_dir, os.path.basename(input_image_filenames[i]))
+                output_image_filename = os.path.join(output_image_dir, default_output_image_filename)
                 tf.keras.preprocessing.image.save_img(output_image_filename, blended_image, scale=False)
                 print(INFO("Blending stage output saved to {:s}.".format(output_image_filename)))
 
