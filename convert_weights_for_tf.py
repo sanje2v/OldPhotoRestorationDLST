@@ -35,6 +35,9 @@ def main(args):
                 if 'state_dict' in input_weights:
                     input_weights = input_weights['state_dict']
 
+                print(layer.name)
+                print(input_weights.keys())
+
                 inner_layer_list = list(filter(lambda x: x.startswith(layer.inner_layers.name), input_weights.keys()))
                 inner_layer_index = 0
                 conv2d_variables = [x for x in layer.variables if 'conv2d' in x.name]
@@ -93,7 +96,7 @@ def main(args):
 
         # Create all the intermediate directories and then save weights as TensorFlow checkpoint
         os.makedirs(os.path.dirname(opts.output_weights), exist_ok=True)
-        model.save_weights(opts.output_weights, save_format='tf')
+        #model.save_weights(opts.output_weights, save_format='tf')
 
 
 def to_pytorch_like_name(name, prefix_len_to_remove=0):

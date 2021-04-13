@@ -35,5 +35,4 @@ class ScratchDetector(tf.keras.Model):
 
         x = sigmoid(iterative_call(self.inner_layers, inputs, training=training))
         x = tf.where(tf.greater_equal(x, 0.4), tf.ones_like(x, dtype=tf.dtypes.int32), tf.zeros_like(x, dtype=tf.dtypes.int32))
-
         return x

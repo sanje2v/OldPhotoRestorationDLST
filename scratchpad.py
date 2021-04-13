@@ -8,20 +8,27 @@ from pprint import pprint
 
 import consts
 
-from models import ScratchDetector
-from models.modules import NonLocalBlock2D_with_mask_Res
+from models import *
+from models.modules import *
 
 with tf.device("/CPU"):
-    scratch_detector = ScratchDetector()
-    a = scratch_detector(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
-    print(a.shape)
-    pprint([x.name for x in scratch_detector.variables])
+    opts.with_scratch = True
+    model = ImageEnhancer(opts)
+    model([np.empty((1, 608, 928, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+           np.empty((1, 608, 928, 1), dtype=np.float32)])
+
+    #scratch_detector = ScratchDetector()
+    #a = scratch_detector(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
+    #print(a.shape)
+    #pprint([x.name for x in scratch_detector.variables])
 
     #test = NonLocalBlock2D_with_mask_Res(512, 512, 'combine', True, 1.0, False, False)
     #y = test([tf.zeros((1, 152, 232, 512)), tf.ones((1, 608, 928, 1))], training=False)
 
-
-#    face_enhancer = FaceEnhancer(opts)
+    #opts.with_scratch = True
+    #face_enhancer = FaceEnhancer(opts)
+    #face_enhancer([np.empty((1, 604, 920, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+    #               np.empty((1, 604, 920, 1), dtype=np.float32)])
 
 #    # Load model weights
 #    face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),

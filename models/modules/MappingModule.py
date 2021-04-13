@@ -64,13 +64,12 @@ class MappingModule(tf.keras.layers.Layer):
         setattr(self.inner_layers, 'name', 'model')
 
     def call(self, inputs, training):
-        x, _ = inputs
+        x, mask = inputs
 
         if self.use_mask:
             x = iterative_call(self.inner_layers[:(self.index_before_NL_res+1)], x, training=training)
-            x = self.inner_layers[self.index_before_NL_res+1](inputs, training=training)
-            x = iterative_call(self.inner_layers[(self.index_before_NL_res+1):], x, training=training)
+            x = self.inner_layers[self.index_before_NL_res+1]([x, mask], training=training)
+            x = iterative_call(self.inner_layers[(self.index_before_NL_res+2):], x, training=training)
         else:
             x = iterative_call(self.inner_layers, x, training=training)
-
         return x

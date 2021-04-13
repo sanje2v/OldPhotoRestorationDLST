@@ -1,5 +1,5 @@
 # TensorFlow v2+Keras re-implementation of 'Old Photo Restoration via Deep Latent Space Translation', CVPR 2020 paper
-This is a TensorFlow v2+Keras inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos.
+This is a *TensorFlow v2+Keras* inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos.
 
 The whole process consists of the following steps:
 * Stage 1 - Image enhancement
@@ -29,7 +29,7 @@ The following software versions were used for testing the code in this repo.
 * Microsoft Visual Studio 2019 (if using .sln file)
 * Other required python libraries are in 'requirements.txt'
 
-NOTE: As of the date of the publication of this repo, DLib is only available for Python 3.6 or lower with Pip. You could either use Python 3.6 or recompile DLib yourselves.
+*NOTE: As of the date of the publication of this repo, DLib is only available for Python 3.6 or lower with Pip. You could either use Python 3.6 or recompile DLib yourselves.*
 
 \**Required for weights conversion*
 
