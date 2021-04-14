@@ -1,5 +1,5 @@
 # TensorFlow v2+Keras re-implementation of 'Old Photo Restoration via Deep Latent Space Translation', CVPR 2020 paper
-This is a *TensorFlow v2+Keras* inference ONLY implemention of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos. This repo provides a 'cleaner' version of the original implementation and removes dependecies on some libraries.
+This is a *TensorFlow v2+Keras* inference ONLY implementation of a [CVPR 2020 paper](https://arxiv.org/abs/2004.09484) that restores old photos sufferring from degradations like faded colors, scratches and color spots by jointly learning from the latent spaces of paired artificially degraded images and real degraded photos. This repo provides a 'cleaner' version of the original implementation and removes dependencies on some libraries.
 
 The whole process consists of the following steps:
 * Stage 1 - Scratch mask detection (Optional)
