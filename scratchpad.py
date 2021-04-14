@@ -3,7 +3,9 @@ from models import FaceEnhancer
 import test_options as opts
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, BatchNormalization, LeakyReLU
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization, LeakyReLU, ReLU, InputLayer
+from tensorflow_addons.layers import SpectralNormalization, InstanceNormalization
 from pprint import pprint
 
 import consts
@@ -11,16 +13,48 @@ import consts
 from models import *
 from models.modules import *
 
-with tf.device("/CPU"):
-    opts.with_scratch = True
-    model = ImageEnhancer(opts)
-    model([np.empty((1, 608, 928, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-           np.empty((1, 608, 928, 1), dtype=np.float32)])
 
-    #scratch_detector = ScratchDetector()
-    #a = scratch_detector(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
-    #print(a.shape)
-    #pprint([x.name for x in scratch_detector.variables])
+with tf.device("/CPU"):
+    scratch_detector = ScratchDetector()
+    a = scratch_detector(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
+    print(a.shape)
+    pprint([x.name for x in scratch_detector.variables])
+
+
+    #opts.with_scratch = False
+    #model = ImageEnhancer(opts)
+    #model([np.empty((1, 608, 928, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+    #       np.empty((1, 608, 928, 1), dtype=np.float32)])
+
+    #def iterate_layer(prefix, submodules):
+    #    i = 0
+    #    for inner_layer in submodules:
+    #        if isinstance(inner_layer, (Sequential, InputLayer)):
+    #            continue
+    #        elif isinstance(inner_layer, (Conv2D, Conv2DTranspose)):
+    #            out = prefix + '.' + layer.inner_layers.name + "." + str(i) if inner_layer.name.startswith('conv2d') else inner_layer.name
+    #            i = i + 1
+    #            print(out)
+    #        elif isinstance(inner_layer, (BatchNormalization, InstanceNormalization, ReLU, LeakyReLU)):
+    #            i = i + 1
+    #            continue
+    #        else:
+    #            i = i + 1
+
+    #            if len(inner_layer.submodules) > 0:
+    #                iterate_layer(prefix + '.' + inner_layer.name, inner_layer.submodules)
+
+    #for layer in model.layers:
+    #    print(layer.name)
+
+    #    iterate_layer(layer.name, layer.submodules)
+
+#    opts.with_scratch = True
+#    model = ImageEnhancer(opts)
+#    model([np.empty((1, 608, 928, consts.NUM_RGB_CHANNELS), dtype=np.float32),
+#           np.empty((1, 608, 928, 1), dtype=np.float32)])
+
+    
 
     #test = NonLocalBlock2D_with_mask_Res(512, 512, 'combine', True, 1.0, False, False)
     #y = test([tf.zeros((1, 152, 232, 512)), tf.ones((1, 608, 928, 1))], training=False)

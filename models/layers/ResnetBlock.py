@@ -15,7 +15,6 @@ class ResnetBlock(tf.keras.layers.Layer):
         self.use_dropout = use_dropout
         self.dilation = dilation
 
-    def build(self, input_shape):
         self.conv_block = tf.keras.Sequential(name='conv_block')
 
         if self.padding_type == 'reflect':

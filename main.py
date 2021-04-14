@@ -48,15 +48,19 @@ def main(args):
 
         # Load model weights
         # CAUTION: Need to eagerly inference once to create all model layer to apply weights to
+        next_checkpoint_index = 0
         if opts.with_scratch:
             scratch_detector(np.empty((1, 256, 256, 1), dtype=np.float32))
+            scratch_detector.load_weights(opts.checkpoint[next_checkpoint_index]).assert_consumed()
+            next_checkpoint_index = next_checkpoint_index + 1
         image_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                        np.empty((1, 256, 256, 18), dtype=np.float32)])
-        image_enhancer.load_weights(opts.checkpoint[0]).assert_consumed()
+                        np.empty((1, 256, 256, 1), dtype=np.float32)])
+        image_enhancer.load_weights(opts.checkpoint[next_checkpoint_index]).assert_consumed()
+        next_checkpoint_index = next_checkpoint_index + 1
 
         face_enhancer([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
                        np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
-        face_enhancer.load_weights(opts.checkpoint[1]).assert_consumed()
+        face_enhancer.load_weights(opts.checkpoint[next_checkpoint_index]).assert_consumed()
 
         # Preprocess and then run each stage
         for i in range(len(input_images)):
@@ -77,6 +81,9 @@ def main(args):
                 os.makedirs(output_image_dir, exist_ok=True)
                 output_image_filename = os.path.join(output_image_dir, "scratchmask_" + default_output_image_filename)
                 tf.keras.preprocessing.image.save_img(output_image_filename, scratch_mask, scale=True)
+                print(INFO("Scratch Detection stage output saved to {:s}.".format(output_image_filename)))
+
+                scratch_mask = scratch_mask.astype(np.float32)
             else:
                 scratch_mask = None
 
@@ -149,7 +156,7 @@ if __name__ == '__main__':
         parser.add_argument('--input_folder', required=True, type=lambda x: os.path.abspath(x), help="Folder with image files to process")
         parser.add_argument('--output_folder', type=lambda x: os.path.abspath(x), default=settings.DEFAULT_OUTPUT_FOLDER, help="Folder where to output processed images")
         parser.add_argument('--gpu_id', required=False, type=int, default=-1, help="GPU device id OR integer less than 0 for CPU device")
-        parser.add_argument('--checkpoint', required=True, nargs=2, metavar=("IMAGE_ENHANCEMENT_WEIGHTS", "FACE_ENHANCEMENT_WEIGHTS"), type=str, help="Checkpoint weights to use")
+        parser.add_argument('--checkpoint', required=True, nargs='+', metavar=("IMAGE_ENHANCEMENT_WEIGHTS", "FACE_ENHANCEMENT_WEIGHTS"), type=str, help="Checkpoint weights to use")
         parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")
         args = parser.parse_args()
 

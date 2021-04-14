@@ -17,7 +17,7 @@ class UNetConvBlock(tf.keras.layers.Layer):
         block = []
         for _ in range(conv_num):
             block.extend([ReflectionPadding2D(padding=padding),
-                          Conv2D(out_size, kernel_size=3, padding='valid')])
+                          Conv2D(out_size, kernel_size=3, padding='valid', name='block')])
             if norm_layer:
                 block.append(norm_layer())
             block.append(LeakyReLU(alpha=0.2))

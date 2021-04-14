@@ -44,7 +44,7 @@ class UNet(tf.keras.layers.Layer):
                                     BatchNormalization(),
                                     LeakyReLU(alpha=0.2)])
 
-            down_path.append(UNetConvBlock(conv_num, 2**(wf + i + 1), padding, norm_layer))
+            down_path.append(UNetConvBlock(conv_num, 2**(wf + i + 1), padding, norm_layer, name='down_path'))
             prev_channels = 2**(wf+ i + 1)
 
         up_path = []
@@ -57,16 +57,16 @@ class UNet(tf.keras.layers.Layer):
         if with_tanh:
             last_layers.append(Lambda(lambda x: tanh(x), trainable=False))
 
-        self.inner_layers = [first_layers, down_sample, down_path, up_path, last_layers]
+        self.inner_layers = [first_layers, down_path, down_sample, up_path, last_layers]
 
 
     def call(self, inputs, training):
         x = iterative_call(self.inner_layers[0], inputs, training=training)
 
         blocks = []
-        for i, down_block in enumerate(self.inner_layers[2]):
+        for i, down_block in enumerate(self.inner_layers[1]):
             blocks.append(x)
-            x = iterative_call(self.inner_layers[1][i], x, training=training)
+            x = iterative_call(self.inner_layers[2][i], x, training=training)
             x = down_block(x, training=training)
 
         for i, up in enumerate(self.inner_layers[3]):

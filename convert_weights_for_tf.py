@@ -25,20 +25,65 @@ def main(args):
     with tf.device('/CPU'):
         if opts.stage == 1:
             # Create the model instance and run it eagerly so that all its layers are constructed
+            model = ScratchDetector()
+            model(tf.zeros((256, 384, 1), dtype=tf.dtypes.float32), training=False)
+
+            input_weights = opts.input_weights[list(opts.input_weights.keys())[0]]['model_state']
+
+            from pprint import pprint
+            for layer in model.layers:
+                # NOTE: Because Tensorflow variable iteration messed up order of 'running_mean' and 'running_var',
+                #       we first copy weights for Conv2D's kernel and bias and also BatchNorm's gamma and beta
+                input_weights_list = [v for k, v in input_weights.items() if any(y in k for y in ['weight', 'bias'])]
+                input_weights_index = 0
+                kernel_and_bias_variables = [x for x in layer.variables if any(y in x.name for y in ['kernel', 'bias', 'gamma', 'beta'])]
+
+                for i, variable in enumerate(kernel_and_bias_variables):
+                    if any(x in variable.name for x in ['kernel', 'gamma']):
+                        weights = input_weights_list[input_weights_index].numpy()
+                        if len(weights.shape) == 4:
+                            weights = np.transpose(weights, (2, 3, 1, 0))
+                        assert weights.shape == variable.shape, "Weights for '{:s}' being assigned is of a different shape than of variable!".format(variable.name)
+                        variable.assign(weights)
+                        input_weights_index += 1
+                    elif any(x in variable.name for x in ['bias', 'beta']):
+                        bias = input_weights_list[input_weights_index].numpy()
+                        assert bias.shape == variable.shape, "Bias for '{:s}' being assigned is of a different shape than of variable!".format(variable.name)
+                        variable.assign(bias)
+                        input_weights_index += 1
+
+                if len(input_weights_list) != input_weights_index:
+                    print(CAUTION("Not all {:d} weights values were used for '{:s}' Conv2D and BatchNorms.".format(len(input_weights_list), layer.name), prefix='\n'))
+
+                input_weights_list = [v for k, v in input_weights.items() if any(y in k for y in ['running_mean', 'running_var'])]
+                input_weights_index = 0
+                kernel_and_bias_variables = [x for x in layer.variables if any(y in x.name for y in ['moving_mean', 'moving_variance'])]
+
+                for i, variable in enumerate(kernel_and_bias_variables):
+                    weights = input_weights_list[input_weights_index].numpy()
+                    variable.assign(weights)
+                    input_weights_index += 1
+
+                if len(input_weights_list) == input_weights_index:
+                    print(INFO("All {:d} weights values were used for '{:s}'.".format(len(input_weights_list), layer.name), prefix='\n'))
+                else:
+                    print(CAUTION("Not all {:d} weights values were used for '{:s}' BatchNorm's statistics.".format(len(input_weights_list), layer.name), prefix='\n'))
+
+        elif opts.stage == 2:
+            # Create the model instance and run it eagerly so that all its layers are constructed
             model = ImageEnhancer(opts)
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                   np.empty((1, 256, 256, 1), dtype=np.float32)])
+                   np.empty((1, 256, 256, 1), dtype=np.float32)], training=False)
 
             # CAUTION: This code assumes that PyTorch saves weights in the order of layers
             for layer in model.layers:
                 input_weights = opts.input_weights[layer.name]
-                if 'state_dict' in input_weights:
-                    input_weights = input_weights['state_dict']
 
-                print(layer.name)
-                print(input_weights.keys())
-
-                inner_layer_list = list(filter(lambda x: x.startswith(layer.inner_layers.name), input_weights.keys()))
+                if opts.with_scratch and layer.name.casefold() == 'mapping_net':
+                    inner_layer_list = list(input_weights.keys())
+                    conv2d_variables = [x for x in layer.variables if 'conv2d' in x.name]
+                else:
+                    inner_layer_list = list(filter(lambda x: x.startswith(layer.inner_layers.name), input_weights.keys()))
                 inner_layer_index = 0
                 conv2d_variables = [x for x in layer.variables if 'conv2d' in x.name]
 
@@ -63,7 +108,7 @@ def main(args):
             # Create the model instance and run it eagerly so that all its layers are constructed
             model = FaceEnhancer(opts)
             model([np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32),
-                   np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)])
+                   np.empty((1, 256, 256, consts.NUM_RGB_CHANNELS), dtype=np.float32)], training=False)
 
             input_weights = opts.input_weights[model.name]
             unused_keys = list(input_weights.keys())
@@ -96,7 +141,7 @@ def main(args):
 
         # Create all the intermediate directories and then save weights as TensorFlow checkpoint
         os.makedirs(os.path.dirname(opts.output_weights), exist_ok=True)
-        #model.save_weights(opts.output_weights, save_format='tf')
+        model.save_weights(opts.output_weights, save_format='tf')
 
 
 def to_pytorch_like_name(name, prefix_len_to_remove=0):
@@ -130,7 +175,7 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser(description=settings.PROJECT_DESCRIPTION)
         parser.add_argument('--input_weights', required=True, nargs='+', action=ValidateLayerNamesAndWeightsFile, help="Layer names followed by weights files to load and convert")
         parser.add_argument('--output_weights', required=True, type=lambda x: os.path.abspath(x), help="Tensorflow + Keras weights file")
-        parser.add_argument('--stage', type=int, required=True, choices=[1, 3], help="Stage 1: Image enhancement, Stage 3: Face enhancement")
+        parser.add_argument('--stage', type=int, required=True, choices=[1, 2, 3], help="Stage 1: Scratch detection, Stage 2: Image enhancement, Stage 3: Face enhancement")
         parser.add_argument('--with_scratch', action='store_true', help="Also remove scratches in input image")
         args = parser.parse_args()
 

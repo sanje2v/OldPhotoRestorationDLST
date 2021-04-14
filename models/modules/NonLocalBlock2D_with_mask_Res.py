@@ -24,15 +24,15 @@ class NonLocalBlock2D_with_mask_Res(tf.keras.layers.Layer):
         self.norm_layer = norm_layer
         self.activation_layer = activation_layer
 
-        calc_g_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid', name='g'),
+        calc_g_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid'),
                     Lambda(lambda x: tf.transpose(tf.reshape(x, (x.shape[0], self.inter_channels, -1)), perm=(0, 2, 1)), trainable=False)]
-        calc_theta_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid', name='theta'),
+        calc_theta_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid'),
                         Lambda(lambda x: tf.transpose(tf.reshape(x, (x.shape[0], self.inter_channels, -1)), perm=(0, 2, 1)), trainable=False),
                         Lambda(lambda x: tf.linalg.norm(x, ord=2, axis=2) if self.cosin else x, trainable=False)]
-        calc_phi_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid', name='phi'),
+        calc_phi_x = [Conv2D(self.inter_channels, kernel_size=1, strides=1, padding='valid'),
                       Lambda(lambda x: tf.reshape(x, (x.shape[0], self.inter_channels, -1)), trainable=False),
                       Lambda(lambda x: tf.linalg.norm(x, ord=2, axis=1) if self.cosin else x, trainable=False)]
-        calc_W = [Conv2D(self.in_channels, kernel_size=1, strides=1, padding='valid', name='W')]
+        calc_W = [Conv2D(self.in_channels, kernel_size=1, strides=1, padding='valid')]
         res_blocks = [ResnetBlock(self.inter_channels,
                                   padding_type='reflect',
                                   norm_layer=self.norm_layer,

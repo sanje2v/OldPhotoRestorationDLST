@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization, ReLU, LeakyReLU, Lambda
+from tensorflow.keras.layers.experimental import SyncBatchNormalization
 from tensorflow.keras.activations import tanh, sigmoid
 
 from .layers import ReflectionPadding2D
